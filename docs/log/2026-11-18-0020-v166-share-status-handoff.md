@@ -1,0 +1,31 @@
+# v1.6.6 partner sharing P2: status from the Now card, and notices (branch claude/v166-share-status, from claude/v166-sharing)
+
+Built from Kai's 2026-11-17 P2 picks (design-export/Partner sharing P2 flows.html flows 4 and 5, Sharing looks.html 8 and 10). Not merged, not released. Migration **0103**.
+
+## What it is
+- **Status (opt-in, never a place).** "Show my status to Reem" on her page (Settings > Sharing > Reem), off until chosen. She sees a short line next to Kai's name on the Her day card and on the lane chip, only when the lower of your two levels is Details and nothing is paused. Words come from Kai's Now card, derived on the server: "Focusing until 3" (a Focus round on his device, sent as until + task), "At the gym" / "In class" / "At work" from the current block's Area (by keyword, never its title), else "Busy until 3". Own words win while alive (Commuting, At the gym, In class, Sleeping, Free text me, or his own, 40 characters). A Private block (itself, its task, its series, its Time block) gives no words and blanks the Focus words too. A status never lives past 24 hours (clamped on write by a trigger and checked again on read); default clear is tonight at his quiet hours (inside quiet hours: when they end); also In an hour, or When I clear it (24 hours at most). Today shows "Reem sees Focusing until 3:30 · auto" under the Now card (phone and desktop); a tap opens the sheet (From the Now card switch, words in a tap, write your own, Clears, Clear it, "No location, ever").
+- **Notices (every kind Off by default).** "Reem added Dinner, Fri 8 PM" (Busy only: "Reem added something, Fri 8 PM"). On her page: Notices from Reem, each kind Off / In-app / Push. One pipeline for any kind: `share_notice_emit(actor, kind, group, detail_payload, busy_payload, ref)` stores per recipient ONLY the payload their level allows, and only for a kind they switched on. Wired now to P1 calendar events (a native event, Time block or task block added; not Google/subscribed imports, not the past, never a Private item; an item turned Private or trashed, or its task turned Private, takes its waiting notice back). The shared-events and shared-lists builders call the same function with their own kind and add one row to `NOTICE_KINDS` (statusModel.ts).
+- **Grouping and quiet hours.** One notice per kind and person per 5 minutes (a burst folds: "Reem added 3 things"). Quiet hours HOLD a notice (release_at = when they end, on the recipient's own zone), for the strip and for push alike.
+- **In-app:** one strip on Today ("From Reem" with one line each, Dismiss), gone when dismissed or after a day.
+- **Push:** notify's new `share_notice` kind (pg_cron every 5 minutes, `share_notices_due()` / `share_notices_pushed()`): ONE push per person per tick; on a lock screen no title unless "Show task names" is on; a paused-notifications tick leaves it due for the next one.
+- **Server shape:** full note in docs/DATA_MODEL.md (0103). Tables `share_status`, `share_notices`; columns `circle_members.status_on`, `notice_prefs`. 0100's `shared_day` and `share_connections` are NOT redefined (other P2 builders replace them too; the last migration would win), so her status is its own call `share_status_of(owner)` and my switches are `share_notice_settings()`. For the widget builder: `share_status_for_viewer(owner, viewer)` (service role) is the one gate.
+
+## Checks
+- Gate: vitest x4 time zones 3046/3046, lint 0, build, ds:check 0 new (D:\temp\claude\gate-share-status\gate.txt).
+- deno check: notify ok. Unit tests: app/src/features/sharing/statusNotice.test.ts (words, masking wording, one-line push, lock screen, clears).
+- Rehearsal: supabase/tests/share-status.sh, 108 passed 0 failed (3 users: opt-in; Details only; the lower level; pause; own words; auto words from Area and kind, no title; Focus; Private block / task / Time block / series gives none; 24-hour cap on write, on read, and 25-hour-old words; tonight = quiet hours; masking per level at rest; Private never notifies and retracts; imports and the past don't; one per 5 minutes; quiet-hours hold and release; push due once; dismiss only; a third user and the app roles get nothing; the generic door; disconnect keeps nothing). The P1 suite's table guard allows `areas` now (only an area's name picks the words). Final Rehearsal run is named in the reply.
+- Harness docs/log/assets/v166-share-status/verify.mjs (Edge, mocked backend): 24/24; screenshots beside it. Mock port 5274.
+
+## Decisions for Kai
+1. **Status is Details only** (the page says so); the task's "at the viewer's allowed level" is read that way. At Titles or Busy there is no status and no "hidden" label.
+2. **Auto words use the block's Area name by keyword** (gym, class/lab/study, work), else "Busy until 3". A different mapping (an Area setting that says what it announces) is a small follow-up.
+3. **Repeating blocks (a weekly gym slot) give no auto words**: they are one row plus a rule and SQL has no rrule. Own words and Focus still work. Fix = the owner's device sends the occurrence, or a SQL expander.
+4. **Delay:** a notice is held for its 5-minute window so a burst can fold, and push goes out on the 5-minute cron, so a push arrives 5 to 10 minutes after the event.
+5. **Push mode also puts the line in the Today strip** (the strip is the record); In-app is strip only.
+6. **Notice switches live on her page** (Settings > Sharing > Reem), not under Notifications & sound > From Reem; only the one wired kind ("adds something") shows until the other builders add theirs.
+7. **Status and notice settings are online-only** (the server stamps and caps times); my Focus round tells the server best-effort.
+
+## Not done / follow-ups
+- Shared events and lists notices (invited, answered, ticked 2 on Groceries) come from the other builders: they call `share_notice_emit` and add to `NOTICE_KINDS`.
+- The Her-day widget (0104) should read `share_status_for_viewer`; after 24 hours it greys out and hides titles (their spec).
+- The Focus-round sync (`useShareFocus` in StatusNotice.tsx) is not covered by the harness (the focus store is module-local); it is a store subscription that calls `share_status_focus` on start, stop, pause and a new round.

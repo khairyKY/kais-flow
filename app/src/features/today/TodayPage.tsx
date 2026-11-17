@@ -880,7 +880,7 @@ function TodayView({ nav }: { nav: DayNav }) {
           rowSelection={rowSelection}
         />
       )}
-      {deskCard && <div style={{ padding: '0 0 0 24px' }}><ShareTodayExtras /></div>}
+      {deskCard && <ShareTodayExtras />}
       {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14 }} />}
 
       {/* The side column grows with the page too, from 264 to 340 (Kai 2026-10-03). */}
