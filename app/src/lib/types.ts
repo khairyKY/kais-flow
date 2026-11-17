@@ -80,6 +80,8 @@ export interface Task {
   /** Origin key (0027, unique per user+source+id): an import's {source, id, raw}, or a filed GitHub
    * issue's {source: 'github', id: node_id, url}. Never copied onto a duplicate/next occurrence. */
   external_ref?: { source: string; id: string; url?: string; raw?: unknown } | null
+  /** Migration 0100 (sharing): Private - people you share with never see its title or notes, and it is never on their card. Null/absent = shown. */
+  private?: boolean
   created_at: string
   updated_at: string
 }
@@ -147,6 +149,8 @@ export interface CalendarEvent {
    * write and it's ours to change (gcal-events — else read-only); `url`: its join link (Meet…); `link`: its page in
    * Google Calendar; `master`: a repeating event's series id in Google. */
   external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string; edit?: boolean; url?: string; link?: string; master?: string; sub_id?: string; uid?: string } | null
+  /** Migration 0100 (sharing): Private - a Busy block to people you share with, at every level; a series is private as a whole. Null/absent = shown. */
+  private?: boolean
   /** Migration 0077: remind this many minutes before each start (null/absent = none) — an offset, so it
    * follows a move and every occurrence of a series. Never on a Google event. */
   remind_min?: number | null
