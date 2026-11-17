@@ -17,6 +17,9 @@ const SYNCED_TABLES = [
   'resurfaced_log',
   'time_entries',
   'smart_lists',
+  // Sharing (migration 0100): ONE row per user, a timestamp - "something you can see changed". It never carries a task, an event or a
+  // title; the screens re-ask the masked `shared_day`. A write by someone you share with, a level, a pause or a leave bumps it.
+  'share_pings',
 ] as const
 
 // Tables carrying `deleted_at` that the Trash page (features/trash/api.ts) unions over —
@@ -40,6 +43,11 @@ export function invalidateSoon(table: string): void {
     waiting.delete(table)
     void queryClient.invalidateQueries({ queryKey: [table] })
     if (TRASHED_TABLES.has(table)) void queryClient.invalidateQueries({ queryKey: ['deleted_items'] })
+    // Someone you share with changed something: their day (masked) and the connections are asked again.
+    if (table === 'share_pings') {
+      void queryClient.invalidateQueries({ queryKey: ['shared_day'] })
+      void queryClient.invalidateQueries({ queryKey: ['share_connections'] })
+    }
   }, Math.max(0, Math.min(DEBOUNCE_MS, since + MAX_WAIT_MS - now)))
   waiting.set(table, { timer, since })
 }

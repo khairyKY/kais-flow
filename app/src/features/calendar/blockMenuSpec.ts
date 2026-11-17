@@ -11,7 +11,7 @@ import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 import { rangeOf, spansDays } from './rangeEdit'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen' | 'ends' | 'allday'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen' | 'ends' | 'allday' | 'private'
 
 /** cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens a block's DETAILS (when, project,
  * repeat, remind…); a right-click opens MENU B (the swatch tray, Duplicate, Work with AI ›, Copy link, Delete). */
@@ -37,7 +37,7 @@ export interface BlockMenuEntry {
 
 export interface BlockMenuContext {
   /** The task behind a task block, when it's loaded. */
-  task?: Pick<Task, 'title' | 'status'> | null
+  task?: Pick<Task, 'title' | 'status' | 'private'> | null
   /** The project's or area's name the event is filed under (0099); none = "No project or area". */
   placeName?: string | null
   /** A task block that ran out unfinished: Replan… (the grid's own "Overdue · Replan" link). */
@@ -172,6 +172,8 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
       ...(e.all_day ? [{ key: 'time' as const, label: 'All day' }] : crossesDays(e) ? [] : [{ key: 'time' as const, label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: edit }]),
       { key: 'google', label: `From ${e.source === 'ics' ? 'subscription' : 'Google'} · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
       ...googleRows(e),
+      // Sharing: Private is ours to set on any event, a Google or subscribed one too (it is a Busy block to the people you share with).
+      privateRow(e, ctx),
       ...(edit ? [deleteRow(e, ctx, isRepeatingBlock(e))] : [{ key: 'duplicate' as const, label: DUPLICATE_AS_MINE }]),
     ]
   }
@@ -191,6 +193,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
           : [{ key: 'time' as const, label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true }]),
     ...(plain ? [{ key: 'allday' as const, label: 'All day', on: e.all_day }] : []),
     { key: 'project', label: ctx.placeName ?? 'No project or area', unset: !ctx.placeName, sub: true },
+    privateRow(e, ctx),
   ]
   // A task block repeats through its task's own rule, never on the calendar.
   if (!e.task_id) out.push({ key: 'repeat', label: repeatLabel(e.recurrence_rule), unset: !e.recurrence_rule, sub: true })
@@ -213,6 +216,11 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   }
   out.push(deleteRow(e, ctx, repeating))
   return out
+}
+
+/** The Private switch (sharing, v1.6.6): on a task's block it is the task's own flag. A Private item is a Busy block to the people you share with. */
+function privateRow(e: CalendarEvent, ctx: BlockMenuContext): BlockMenuEntry {
+  return { key: 'private', label: 'Private', hint: 'Shows as Busy to people you share with', on: e.task_id ? !!ctx.task?.private : !!e.private }
 }
 
 /** "▶ Focus on this" (focus D3): a task block's task, a Time block's first open task, else a plain round. */

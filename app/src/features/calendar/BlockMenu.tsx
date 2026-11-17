@@ -16,6 +16,7 @@ import { MovePicker } from '../tasks/MovePicker'
 import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat } from './api'
+import { setEventPrivate, setTaskPrivate } from '../sharing/private'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
 import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isRepeatingBlock, isSynced, isUntitled, remindLabel, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
@@ -38,11 +39,11 @@ import { pickRange, rangeLabel, rangeOf, storeRange, toggleAllDay, type Range } 
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'calendar', allday: 'clock',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'calendar', allday: 'clock', private: 'lock',
 }
 
 /** What a read-only Google event's rows can do. */
-const GOOGLE_ROWS: BlockMenuKey[] = ['details', 'copylink', 'join', 'gopen', 'duplicate']
+const GOOGLE_ROWS: BlockMenuKey[] = ['details', 'copylink', 'join', 'gopen', 'duplicate', 'private']
 
 // B (D5): a caption is metadata — sentence case, untracked, even digits.
 const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
@@ -330,6 +331,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
     join: () => joinMeeting(event),
     gopen: () => openInGoogle(event),
     allday: () => applyRange(toggleAllDay(rangeOf(event), !event.all_day)),
+    private: () => (event.task_id ? task && setTaskPrivate(task, !task.private) : setEventPrivate(event, !event.private)),
     details: () => onDetails?.(),
     focus: () => { onClose(); startFocus(focusTaskOf(event, tasks), event) },
     unschedule,
@@ -347,7 +349,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
       // Menu B draws Duplicate's keys as "Ctrl D" (the cheatsheet's ⌘/Ctrl rows; ⌘D works on a Mac too).
       e.key === 'duplicate' ? <KeyCombo keys={['Ctrl', 'D']} size="sm" /> : e.key === 'project' && place ? (
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: colorOf({ project_id: event.project_id, area_id: event.area_id }).color ?? 'var(--ink-hairline)' }} />
-      ) : e.key === 'allday' ? (e.on ? check : undefined) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
+      ) : e.key === 'allday' || e.key === 'private' ? (e.on ? check : undefined) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
     before: e.caption && (
       <>
         <div style={{ ...CAPTION, padding: '4px 9px 5px' }}>{e.caption.label}</div>

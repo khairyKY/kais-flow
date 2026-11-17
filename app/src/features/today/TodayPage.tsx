@@ -41,6 +41,7 @@ import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
 import { useResurfacePick } from '../resurfacing/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
+import { HerDayCards } from '../sharing/HerDayCard'
 import { CAPTURE_INPUT_ID, openTaskCapture } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button, Star, KeyCombo } from '../../components/kit'
 import { Icon } from '../../components/Icon'
@@ -778,6 +779,9 @@ function TodayView({ nav }: { nav: DayNav }) {
               )}
             </section>
 
+            {/* Sharing: her day, a full card after Top 3 (now · next · her Top 3, at the level you both allow). */}
+            <HerDayCards />
+
             {listsReady && todayRows.length > 0 && (
               <section aria-label="Today's tasks">
                 <div className="tp-pt">Today's tasks<span className="tp-pt-note"> · {todayCount}</span></div>
@@ -912,6 +916,8 @@ function TodayView({ nav }: { nav: DayNav }) {
               </>
             )}
           </section>
+
+          <HerDayCards />
 
           {showLists && todayRows.length > 0 && (
             <section aria-label="Today's tasks" className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>

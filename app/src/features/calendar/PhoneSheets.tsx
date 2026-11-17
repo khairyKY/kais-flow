@@ -22,6 +22,7 @@ import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat, type BlockRef } from './api'
+import { setEventPrivate, setTaskPrivate } from '../sharing/private'
 import { useStartFocus } from '../today/startFocus'
 import { EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
@@ -88,7 +89,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'pickdate', allday: 'clock',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'pickdate', allday: 'clock', private: 'lock',
 }
 
 /** 7d — tap a plain event (a task block opens as its task, the Task sheet): the same rows as the
@@ -168,6 +169,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     date: () => setPicker('date'),
     ends: () => setPicker('ends'),
     allday: () => setRange(toggleAllDay(rangeOf(event), !event.all_day)),
+    private: () => (event.task_id ? task && setTaskPrivate(task, !task.private) : setEventPrivate(event, !event.private)),
     time: () => setPicker('time'),
     project: () => setPicker('project'),
     repeat: () => setPicker('repeat'),
@@ -292,7 +294,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.key === 'allday' ? (e.on ? 'On' : 'Off') : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!readOnly || ['details', 'ai', 'copylink', 'join', 'gopen', 'duplicate'].includes(e.key)) && run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.key === 'allday' || e.key === 'private' ? (e.on ? 'On' : 'Off') : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!readOnly || ['details', 'ai', 'copylink', 'join', 'gopen', 'duplicate', 'private'].includes(e.key)) && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>

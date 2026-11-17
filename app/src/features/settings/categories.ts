@@ -4,7 +4,7 @@ import type { IconName } from '../../components/icons/kf'
 // four groups (you · how it looks and behaves · what it connects and keeps · help), one per page —
 // /settings/<id> — with the Integrations providers one level down (/settings/integrations/<provider>).
 
-export type CatId = 'account' | 'appearance' | 'calendar' | 'capture' | 'notify' | 'organize' | 'integrations' | 'data' | 'privacy' | 'shortcuts' | 'about'
+export type CatId = 'account' | 'appearance' | 'calendar' | 'capture' | 'notify' | 'organize' | 'sharing' | 'integrations' | 'data' | 'privacy' | 'shortcuts' | 'about'
 
 export interface Cat {
   id: CatId
@@ -21,6 +21,7 @@ export const CATS: Cat[] = [
   { id: 'capture', name: 'Capture & AI', icon: 'inbox', sum: 'Whether the AI files captures, project suggestions, page photos, sharing' },
   { id: 'notify', name: 'Notifications & sound', icon: 'bell', sum: 'Which reminders reach you, quiet hours, the sounds' },
   { id: 'organize', name: 'Organize', icon: 'label', sum: 'Domains, labels, and when “Not now” comes back' },
+  { id: 'sharing', name: 'Sharing', icon: 'people', sum: 'The people you share your day with, and view links for anyone else' },
   { id: 'integrations', name: 'Integrations', icon: 'link', sum: 'Google Calendar, GitHub, AI assistants, the capture key' },
   { id: 'data', name: 'Your data', icon: 'data', sum: 'Import from Akiflow or a CSV, export everything, Trash' },
   { id: 'privacy', name: 'Privacy & terms', icon: 'lock', sum: 'The Privacy Policy and Terms, what we keep and where' },
@@ -31,7 +32,7 @@ export const CATS: Cat[] = [
 export const CAT: Record<CatId, Cat> = Object.fromEntries(CATS.map((c) => [c.id, c])) as Record<CatId, Cat>
 
 /** The list's groups, hairlines between. */
-export const GROUPS: CatId[][] = [['account'], ['appearance', 'calendar', 'capture', 'notify', 'organize'], ['integrations', 'data', 'privacy'], ['shortcuts', 'about']]
+export const GROUPS: CatId[][] = [['account'], ['appearance', 'calendar', 'capture', 'notify', 'organize'], ['sharing', 'integrations', 'data', 'privacy'], ['shortcuts', 'about']]
 
 export const isCat = (s: string | undefined): s is CatId => !!s && s in CAT
 

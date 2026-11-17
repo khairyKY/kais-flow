@@ -132,3 +132,8 @@
 .sv-foot { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--line-dashed); font-size: var(--fs-meta-l); color: var(--ink-muted); line-height: 1.4; }
 .sv-gone { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; text-align: center; }
 .sv-gone p { margin: 0; color: var(--ink-muted); font-size: var(--fs-body-s); }
+
+/* the phone grid's lane: a thin Heather bar at the column's left edge (PhoneGrid draws a button per block) */
+.pc-lane { position: absolute; width: 9px; padding: 0; border: 0; border-radius: 5px; background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); margin-left: calc(var(--lane, 0) * 11px); cursor: pointer; }
+.pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
+.pc-lane:focus-visible { outline: none; box-shadow: var(--focus-ring); }

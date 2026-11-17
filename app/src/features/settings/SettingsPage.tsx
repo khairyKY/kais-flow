@@ -73,6 +73,7 @@ import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
 import { LabelManager } from '../tasks/LabelManager'
 import { ConfirmCard } from '../projects/ConfirmCard'
+import { SharingSettings } from '../sharing/SharingSettings'
 import { runExport } from '../export/api'
 import { useConsents } from '../legal/api'
 import { LegalLink, PRIVACY_URL, TERMS_URL } from '../legal/LegalLinks'
@@ -2589,6 +2590,12 @@ function ShortcutsCat() {
   )
 }
 
+/** Sharing (v1.6.6): its sections are not rows of the settings search, so a search leaves them out. */
+function SharingCat() {
+  const { q } = useContext(ScopeCtx)
+  return q ? null : <SharingSettings />
+}
+
 /** Each category's sections. */
 const BODY: Record<CatId, () => ReactNode> = {
   account: () => <AccountCat />,
@@ -2602,6 +2609,7 @@ const BODY: Record<CatId, () => ReactNode> = {
   ),
   notify: () => <NotificationsCard />,
   organize: () => <OrganizeCat />,
+  sharing: () => <SharingCat />,
   integrations: () => <IntegrationsCat />,
   data: () => <DataCard />,
   privacy: () => <LegalCard />,

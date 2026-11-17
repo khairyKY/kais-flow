@@ -7,6 +7,7 @@ import type { DateSelectArg, DatesSetArg, DayHeaderContentArg, EventClickArg, Ev
 import type { EventDragStartArg, EventDragStopArg, EventResizeDoneArg, EventResizeStartArg, EventResizeStopArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
+import { useToastStore } from '../../lib/toastStore'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
 import { markSeen } from '../tour/help'
@@ -156,6 +157,9 @@ interface CalendarGridProps {
    * empty all-day band, and its free stretches drawn as dashed "2h free" boxes. */
   strip?: boolean
   freeGaps?: { start: string; end: string; label: string }[]
+  /** Sharing (v1.6.6): the thin Heather lane of the people whose day is on — timed blocks, drawn behind yours as FullCalendar background
+   * events (features/sharing/Lane). A block with no title is Busy (hatched). */
+  herLane?: readonly { id: string; start: string; end: string; busy: boolean; label: string; lane: number }[]
   /** cal-wave (Akiflow's "Dynamic"): the first and last hour drawn ("HH:MM:SS"), the rows stretched to
    * the grid's height. Absent = the whole day at the density's row height. */
   slotMinTime?: string
@@ -672,6 +676,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
     strip = false,
     freeGaps,
+    herLane,
     slotMinTime = '00:00:00',
     slotMaxTime = '24:00:00',
     expandRows = false,
@@ -1014,11 +1019,14 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     }).concat(
       // §4 planning strip: the free stretches, behind the blocks (FullCalendar background events).
       (freeGaps ?? []).map((g, i) => ({ id: `kf-free-${i}`, title: g.label, start: g.start, end: g.end, display: 'background', classNames: ['kf-free'] })),
+    ).concat(
+      // Sharing: her blocks as a thin lane behind (a day's own blocks are inset from it, CSS .kf-has-her).
+      (herLane ?? []).map((l) => ({ id: `kf-her-${l.id}`, title: l.label, start: l.start, end: l.end, display: 'background', classNames: ['kf-her', ...(l.busy ? ['is-busy'] : [])], extendedProps: { kfHerLabel: l.label, kfHerLane: l.lane } })),
     )
     fcShared.current = shareEvents(fcShared.current, next)
     return fcShared.current.arr
     // `today` re-reads "overdue" when a new day starts.
-  }, [events, isSpan, zone, shownDays, clockTime, conflictedIds, overlap, hour24, pinnedId, freeGaps, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [events, isSpan, zone, shownDays, clockTime, conflictedIds, overlap, hour24, pinnedId, freeGaps, herLane, today]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── cal-scroll (Kai 2026-10-29): glide through days (./gridGlide) — Day, N days and Week, not the planning strip
   // or Month. FullCalendar draws the days on screen plus `buffer` days either side; the header, the strip of days
@@ -1465,7 +1473,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         return arg.isMirror && !arg.event.id ? <MirrorBody time={arg.timeText} body={body} /> : body
       },
       eventDidMount: (info: EventMountArg) => {
-        if (info.event.display === 'background') return // §4's free stretches: not a block
+        if (info.event.display === 'background') {
+          // Sharing: a lane block says its title and time on hover, and on a tap; it is no block of ours (a press on it makes nothing).
+          const label = (info.event.extendedProps as { kfHerLabel?: string }).kfHerLabel
+          if (label) {
+            info.el.title = label
+            info.el.style.setProperty('--kf-lane', String((info.event.extendedProps as { kfHerLane?: number }).kfHerLane ?? 0))
+            info.el.addEventListener('pointerdown', (e) => e.stopPropagation())
+            info.el.addEventListener('click', (e) => { e.stopPropagation(); useToastStore.getState().push({ message: label }) })
+          }
+          return // §4's free stretches: not a block
+        }
         // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
         // itself (keep it) from a press anywhere else (let go).
         const id = blockIdOf(info.event)
@@ -1866,7 +1884,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     <div
       ref={wrapRef}
       data-tour="calendar"
-      className={[narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z', expandRows && 'kf-cal-fit', glideOn && 'kf-glide'].filter(Boolean).join(' ') || undefined}
+      className={[herLane?.length && 'kf-has-her', narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z', expandRows && 'kf-cal-fit', glideOn && 'kf-glide'].filter(Boolean).join(' ') || undefined}
       onContextMenu={handleGridContextMenu}
       onClick={handleCtrlClick}
       onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY } }}

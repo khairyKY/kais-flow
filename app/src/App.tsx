@@ -72,6 +72,9 @@ const GuidePage = page(() => import('./features/guide/GuidePage'), 'GuidePage')
 const NotebookPage = page(() => import('./features/notebook/NotebookPage'), 'NotebookPage')
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
 const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
+// Sharing (v1.6.6): public too — a view link's page (/v/<token>, no account) and an invite link (/join/<code>, kept through sign-in).
+const ShareViewPage = page(() => import('./features/sharing/ShareViewPage'), 'ShareViewPage')
+const JoinPage = page(() => import('./features/sharing/JoinPage'), 'JoinPage')
 // Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the tab pages so the first tap on a row opens it at once.
 warmLater(() => import('./features/tasks/TaskSheet'))
 // iOS PWA: the Add to Home Screen guide (iOS Safari only; components/InstallGuide).
@@ -114,6 +117,8 @@ function Shell() {
 const router = createBrowserRouter([
   { path: '/sign-in', element: <SignInPage />, errorElement: <RouteErrorPage bare /> },
   { path: '/reset', element: <ResetPage />, errorElement: <RouteErrorPage bare /> },
+  { path: '/v/:token', element: <ShareViewPage />, errorElement: <RouteErrorPage bare /> },
+  { path: '/join/:code', element: <JoinPage />, errorElement: <RouteErrorPage bare /> },
   ...galleries.public,
   {
     path: '/',

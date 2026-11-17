@@ -22,6 +22,7 @@ import { goalIdOf } from '../today/top3Order'
 import { legacyGoalId } from '../today/goalStore'
 import { cachedStarEvents } from '../today/api'
 import { blockHue, KIND_HUE } from './blockHue'
+import { LaneChips, useLanes } from '../sharing/Lane'
 import { outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { completeBlockTask, moveSpan } from './scoped'
 import { findBlock } from './series'
@@ -145,6 +146,8 @@ export function PhoneCalendar() {
   const gridTo = cairoToIso(addDays(shown[shown.length - 1], 2 + reach), '00:00')
   const gridRange = useMemo(() => ({ start: new Date(gridFrom), end: new Date(gridTo) }), [gridFrom, gridTo])
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
+  // Sharing: the thin Heather lane of the people whose day is on, over the days drawn.
+  const lanes = useLanes(gridRange, 'phone')
   const taskById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
   // Kai 2026-10-07: the strip is the desktop rail's Overdue · Today · Inbox, one segment at a time
   // (the first with anything in it, until one is picked); a chip opens the 7g sheet.
@@ -355,6 +358,7 @@ export function PhoneCalendar() {
             <Icon name="chevdown" size={20} className="pc-chev" />
           </button>
         </h1>
+        <LaneChips />
         <Button variant="ghost" onClick={goToday}>Today</Button>
       </header>
       {!online && (
@@ -473,6 +477,7 @@ export function PhoneCalendar() {
         now={now}
         events={gridEvents}
         look={look}
+        lane={lanes}
         pending={marks.pending}
         loading={eventsPending}
         onShift={(n) => {
