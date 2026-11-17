@@ -5,7 +5,9 @@
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { toastUndo } from '../../lib/undo'
-import type { CalendarEvent, Task } from '../../lib/types'
+import { useToastStore } from '../../lib/toastStore'
+import type { CalendarEvent, Project, Task } from '../../lib/types'
+import { PRIVATE_IN_LIST_HELP, isSharedList } from './lists'
 
 /** The stored row behind a block on the grid: an occurrence of a series is its series row. */
 function eventRow(e: Pick<CalendarEvent, 'id' | 'seriesId'>): CalendarEvent | undefined {
@@ -29,6 +31,11 @@ export function setEventPrivate(e: CalendarEvent, on: boolean): void {
 export function setTaskPrivate(t: Task, on: boolean): void {
   const row = queryClient.getQueryData<Task[]>(['tasks'])?.find((r) => r.id === t.id) ?? t
   if (!!row.private === on) return
+  // Shared lists (0102): everything in a shared list is shared. The server refuses it too; this says why before anything is written.
+  if (on && isSharedList(queryClient.getQueryData<Project[]>(['projects'])?.find((p) => p.id === row.project_id))) {
+    useToastStore.getState().push({ message: PRIVATE_IN_LIST_HELP })
+    return
+  }
   writeRow('tasks', { ...row, private: on })
   toastUndo(on ? `Private · ${row.title}` : `No longer private · ${row.title}`, () => writeRow('tasks', row))
 }

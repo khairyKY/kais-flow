@@ -53,7 +53,8 @@ const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'Set
 const SearchPage = page(() => import('./features/search/SearchPage'), 'SearchPage')
 const SharePage = page(() => import('./features/capture/SharePage'), 'SharePage')
 const ProjectsPage = dragPage(() => import('./features/projects/ProjectsPage'), 'ProjectsPage')
-const ProjectDetailPage = page(() => import('./features/projects/ProjectDetailPage'), 'ProjectDetailPage')
+// A project shared with someone is a shared list (sharing/ProjectRoute); every other one is the ordinary detail page.
+const ProjectRoute = page(() => import('./features/sharing/ProjectRoute'), 'ProjectRoute')
 const PerennialsPage = page(() => import('./features/projects/PerennialsPage'), 'PerennialsPage')
 const JournalPage = page(() => import('./features/journal/JournalPage'), 'JournalPage')
 const LibraryPage = page(() => import('./features/library/LibraryPage'), 'LibraryPage')
@@ -146,7 +147,7 @@ const router = createBrowserRouter([
           { path: 'share', element: <SharePage /> },
           // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.
           { path: 'projects', element: <ProjectsPage /> },
-          { path: 'projects/:id', element: <ProjectDetailPage /> },
+          { path: 'projects/:id', element: <ProjectRoute /> },
           { path: 'journal', element: <JournalPage /> },
           { path: 'library', element: <LibraryPage /> },
           { path: 'people', element: <PeoplePage /> },

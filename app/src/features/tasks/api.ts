@@ -413,18 +413,20 @@ const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 export function moveTasksWithUndo(tasks: Task[], to: MoveTarget, said?: string, onUndo?: () => void): void {
   rowExits(tasks)
   const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
+  // A Private task moved into a shared list stops being Private (everything in it is shared): said, with the Undo.
+  const unhid = to.kind === 'project' && !!to.shared && tasks.some((t) => cached(t).private)
   for (const t of tasks) {
     const moved = placeTask(cached(t), to)
     writeRow('tasks', moved)
     logActivity('task.moved', 'task', t.id, place(moved))
   }
   const many = tasks.length === 1 ? '' : `${tasksLabel(tasks.length)} `
-  toastUndo(said ?? (to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}`), () => {
+  toastUndo(said ?? (to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}${unhid ? ' · no longer Private' : ''}`), () => {
     onUndo?.()
     const now = queryClient.getQueryData<Task[]>(['tasks']) ?? []
     for (const t of tasks) {
       const current = now.find((c) => c.id === t.id) ?? t
-      writeRow('tasks', { ...current, ...place(t), milestone_id: t.milestone_id ?? null })
+      writeRow('tasks', { ...current, ...place(t), milestone_id: t.milestone_id ?? null, ...(unhid ? { private: !!t.private } : {}) })
       logActivity('task.moved', 'task', t.id, place(t))
     }
   })

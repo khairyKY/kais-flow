@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { useAuth } from '../features/auth/AuthProvider'
 import { useAppSettings } from './settings'
+import type { Project } from './types'
 
 const SYNCED_TABLES = [
   'domains',
@@ -116,4 +117,44 @@ export function useRealtimeSync() {
       close()
     }
   }, [uid, settingsLive])
+}
+
+/** Shared lists (migration 0102): the other person's items and the list itself arrive on their own channel, because the main one
+ * filters on `user_id = me`. Only the projects shared WITH me (theirs, shared in a connection) are asked for; Realtime checks each
+ * row against the same membership policy the API does, so nothing outside those lists can ever arrive. Mine need no channel: their
+ * rows are mine (a tick by the other person is written under my user_id). */
+export function useSharedListsRealtime() {
+  const uid = useAuth().session?.user.id
+  // The ids come from the projects cache (read here, not through a hook: this file stays free of the features' imports).
+  const [ids, setIds] = useState('')
+  useEffect(() => {
+    const read = () => {
+      const rows = queryClient.getQueryData<Project[]>(['projects']) ?? []
+      setIds(rows.filter((p) => p.shared_circle_id && p.user_id && p.user_id !== uid).map((p) => p.id).sort().slice(0, 100).join(','))
+    }
+    read()
+    return queryClient.getQueryCache().subscribe((e) => { if (e.query.queryKey[0] === 'projects') read() })
+  }, [uid])
+  useEffect(() => {
+    if (!uid || !ids) return
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    const open = () => {
+      if (channel) return
+      channel = supabase.channel('kf-realtime-lists')
+      channel.on('postgres_changes' as never, { event: '*', schema: 'public', table: 'tasks', filter: `project_id=in.(${ids})` }, () => invalidateSoon('tasks'))
+      channel.on('postgres_changes' as never, { event: '*', schema: 'public', table: 'projects', filter: `id=in.(${ids})` }, () => invalidateSoon('projects'))
+      channel.subscribe()
+    }
+    const close = () => {
+      if (channel) void supabase.removeChannel(channel)
+      channel = null
+    }
+    const onVisibility = () => (document.hidden ? close() : open())
+    if (!document.hidden) open()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      close()
+    }
+  }, [uid, ids])
 }
