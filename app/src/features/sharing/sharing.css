@@ -139,3 +139,35 @@
 .pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .pc-lane:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .sh-chip.is-compact { width: 40px; padding: 0; justify-content: center; }
+
+/* ── Shared lists (migration 0102): one project, both edit and tick ── */
+.sl-page { width: 100%; max-width: 640px; padding: 10px 8px 40px; }
+.sl-top { display: flex; align-items: center; justify-content: space-between; }
+.sl-more { width: 44px; height: 44px; margin-right: -10px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink-faint); cursor: pointer; border-radius: 50%; }
+.sl-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sl-h1 { margin: 8px 0 4px; font: 500 var(--fs-display-l) / 1.1 var(--font-display); letter-spacing: var(--ls-display); color: var(--ink-body); }
+.sl-line { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.sl-add { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: var(--paper-bone); color: var(--ink-faint); }
+.sl-add:focus-within { border-color: var(--sel-bg); }
+.sl-add input { flex: 1; min-width: 0; height: 44px; background: none; border: 0; outline: none; font: inherit; font-size: 16px; /* ds-ok: 16px keeps iOS from zooming the page on focus */ color: var(--ink-body); }
+.sl-sec { margin: 22px 4px 6px; font: 600 var(--fs-caption) / 1.2 var(--font-ui); color: var(--ink-body); }
+.sl-sec span { font-weight: 500; color: var(--ink-faint); }
+.sl-rows { border: 1px solid var(--line-card); border-radius: var(--radius-card); background: var(--paper-parchment); overflow: hidden; }
+.sl-row { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 12px; }
+.sl-row + .sl-row { border-top: 1px solid var(--line-card); }
+.sl-title { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 12px 0; font: inherit; font-size: var(--fs-body-l); color: var(--ink-body); cursor: pointer; overflow-wrap: anywhere; }
+.sl-title:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-input); }
+.sl-row.is-done .sl-title { color: var(--ink-faint); text-decoration: line-through; }
+.sl-by { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.sl-when { font-size: var(--fs-meta-l); color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.sl-empty { padding: 16px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.sl-prow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 12px; background: none; border: 0; text-align: left; font: inherit; color: var(--ink-body); cursor: pointer; }
+.sl-prow + .sl-prow { border-top: 1px solid var(--line-card); }
+.sl-prow:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sl-pt { flex: 1; min-width: 0; font-size: var(--fs-body-l); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-pm { flex: none; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sl-group { margin: 22px 0 0; }
+.sl-group .sl-rows { margin-top: 6px; }
+.sl-switch { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line-card); border-radius: var(--radius-input); background: var(--paper-bone); font-size: var(--fs-body); }
+.sl-switch .sl-grow { flex: 1; min-width: 0; }
+.sl-switch small { display: block; font-size: var(--fs-meta-l); color: var(--ink-muted); }

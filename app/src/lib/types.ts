@@ -35,6 +35,10 @@ export interface Project {
   completion_summary?: string | null
   /** In Trash since (migration 0044); absent before it is pushed. */
   deleted_at?: string | null
+  /** Whose project it is (a shared list read from the other person has THEIR id). */
+  user_id?: string
+  /** Migration 0102 (shared lists): the connection (circle) this project is shared in; null/absent = not shared. Set only by the server. */
+  shared_circle_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -82,6 +86,9 @@ export interface Task {
   external_ref?: { source: string; id: string; url?: string; raw?: unknown } | null
   /** Migration 0100 (sharing): Private - people you share with never see its title or notes, and it is never on their card. Null/absent = shown. */
   private?: boolean
+  /** Migration 0102 (shared lists): who added the item and who ticked it - the server sets both from the session, never from the row. */
+  added_by?: string | null
+  done_by?: string | null
   created_at: string
   updated_at: string
 }

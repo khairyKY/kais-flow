@@ -8,7 +8,7 @@ export const TASK_COLUMNS = [
   'title', 'notes', 'status', 'priority', 'labels', 'top3', 'top3_rank', 'sort_order', 'someday', 'paused', 'private',
   'due_at', 'scheduled_start', 'scheduled_end', 'duration_min', 'snoozed_until',
   'recurrence_rule', 'reminder_at', 'reminder_sent', 'remind_again_at', 'external_ref',
-  'completed_at', 'deleted_at', 'created_at', 'updated_at',
+  'completed_at', 'deleted_at', 'added_by', 'done_by', 'created_at', 'updated_at',
 ].join(',') as '*' // typed as '*' so supabase-js's select-string parser types rows like select('*')
 
 export const INBOX_COLUMNS = [
