@@ -1,0 +1,107 @@
+[
+  {
+    "name": "1 the row is there, marked This device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 off by default",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 says what it is (quiet, Samsung too)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 on: asked for notifications first (check, then request)",
+    "ok": true,
+    "detail": "[\"checkPermissions\",\"checkPermissions\",\"requestPermissions\",\"checkPermissions\",\"checkPermissions\",\"requestPermissions\",\"checkPermissions\",\"checkPermissions\",\"checkPermissions\",\"checkPermissions\",\"requestPermissions\"]"
+  },
+  {
+    "name": "2 then setNowNext(true) and the switch is on",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"setQuiet\",false,1350,420],[\"setNowNext\",true]]"
+  },
+  {
+    "name": "4 names off: the note says names show as \"A task\" / \"Busy\" and it is hidden in quiet hours",
+    "ok": true,
+    "detail": "Names show as “A task” and “Busy” until “Show task names on the lock screen” (under Quiet) is on. Hidden in quiet hours."
+  },
+  {
+    "name": "2 off sends setNowNext(false)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1/2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4 names on: switch on, no note",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 denied: the switch stays off and nothing reaches the shell",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"setQuiet\",false,1350,420]]"
+  },
+  {
+    "name": "3 the note says notifications are off, with Open settings",
+    "ok": true,
+    "detail": "Notifications are turned off for Kai’s Flow, so there is nothing to show. Allow them, then turn this on.\nOpen settings"
+  },
+  {
+    "name": "3 Open settings goes to the app’s notification screen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 quiet hours default 22:30–07:00 sends [\"setQuiet\",true,1350,420]",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"setQuiet\",true,1350,420]]"
+  },
+  {
+    "name": "5 quiet hours custom 23:00–06:30 sends [\"setQuiet\",true,1380,390]",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"setQuiet\",true,1380,390]]"
+  },
+  {
+    "name": "5 quiet hours off sends [\"setQuiet\",false,1350,420]",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"setQuiet\",false,1350,420]]"
+  },
+  {
+    "name": "6 status: Now / Next first, then Top 3, Now Bar, Day strip",
+    "ok": true,
+    "detail": "[\"nownext\",\"top3\",\"nowbar\",\"strip\"]"
+  },
+  {
+    "name": "6 active",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 a lock screen hiding silent notifications: says so",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Open settings goes to the phone’s notification settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 an older shell: no Now / Next row (the Day strip is still there)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 the web: no Now / Next row",
+    "ok": true,
+    "detail": ""
+  }
+]
