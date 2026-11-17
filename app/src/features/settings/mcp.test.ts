@@ -286,7 +286,7 @@ describe('MCP: the tools', () => {
     expect(r.data!.top3).toEqual([{ id: tid(1), title: 'Call the tyre supplier', due: '2026-10-04 15:00', project: 'Shaheen Website', labels: ['calls'], top3: true, goal: true }])
     expect(r.data!.today.map((t: { title: string }) => t.title)).toEqual(['Send the invoice'])
     expect(r.data!.overdue.map((t: { title: string }) => t.title)).toEqual(['Renew the domain', 'Water the plants'])
-    expect(r.data!.events).toEqual([{ id: tid(900), title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15' }])
+    expect(r.data!.events).toEqual([{ id: tid(900), title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15', color_source: 'none' }])
     // No settings row → Cairo; a Tokyo user sees Tokyo wall time.
     expect((await call(deps(fakeStore(null, seed())), 'today')).data!.timezone).toBe('Africa/Cairo')
     const tokyo = await call(deps(fakeStore('Asia/Tokyo', seed())), 'today')
@@ -843,7 +843,7 @@ describe('MCP: planning the week', () => {
   it('add_event: a date makes it all-day — its days, the last one included, the same on any clock', async () => {
     const store = fakeStore('Asia/Tokyo')
     const r = await call(deps(store), 'add_event', { title: 'Trip', start: '2026-10-10', end: '2026-10-12' })
-    const trip = { id: r.data!.added.id, title: 'Trip', start: '2026-10-10', end: '2026-10-12', all_day: true }
+    const trip = { id: r.data!.added.id, title: 'Trip', start: '2026-10-10', end: '2026-10-12', all_day: true, color_source: 'none' }
     expect(r.data!.added).toEqual(trip)
     expect(store.cal.find((x) => x.title === 'Trip')).toMatchObject({ starts_at: '2026-10-10T00:00:00.000Z', ends_at: '2026-10-13T00:00:00.000Z', all_day: true })
     for (const zone of ['Asia/Tokyo', 'America/Los_Angeles', 'Africa/Cairo']) {
@@ -1051,9 +1051,9 @@ describe('MCP: planning the week', () => {
     const store = fakeStore('Africa/Cairo', [task(41, 'Write')], [{ id: tid(541), task_id: tid(41), starts_at: '2026-10-04T12:00:00Z', ends_at: '2026-10-04T13:00:00Z', all_day: false }])
     const focus = await call(deps(store), 'add_event', { title: 'Focus', start: '2026-10-04T16:00', kind: 'time_block' })
     expect((await call(deps(store), 'today')).data!.events).toEqual([
-      { id: tid(900), title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15' },
-      { id: tid(541), title: 'block', start: '2026-10-04 15:00', end: '2026-10-04 16:00', kind: 'task', task_id: tid(41) },
-      { id: focus.data!.added.id, title: 'Focus', start: '2026-10-04 16:00', end: '2026-10-04 16:30', kind: 'time_block' },
+      { id: tid(900), title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15', color_source: 'none' },
+      { id: tid(541), title: 'block', start: '2026-10-04 15:00', end: '2026-10-04 16:00', kind: 'task', task_id: tid(41), color_source: 'none' },
+      { id: focus.data!.added.id, title: 'Focus', start: '2026-10-04 16:00', end: '2026-10-04 16:30', kind: 'time_block', color_source: 'none' },
     ])
   })
 })
@@ -1168,5 +1168,66 @@ describe('MCP: block colours', () => {
     const e = (await call(deps(store), 'add_event', { title: 'Tinted', start: '2026-10-08T09:00', color: 'Olive' })).data!.added
     const d = await call(deps(store), 'duplicate_event', { id: e.id })
     expect(d.data!.duplicated).toMatchObject({ color: 'Olive' })
+  })
+})
+
+// colour follows where it lives (Kai 2026-11-16): an event is filed under a project or an area and takes its colour
+// unless it has its own; the calendar tool says which (color_source).
+describe('MCP: colour follows where it lives', () => {
+  const A1 = tid(701)
+  const seed = () => {
+    const store = fakeStore('Africa/Cairo')
+    ;(store.db.projects.find((p) => p.id === P1) as { color?: string }).color = '#72BF8E'
+    store.db.areas = [{ id: A1, name: 'Health', color: 'var(--acc-blossom)', domain_id: null, sort_order: 0, deleted_at: null }]
+    return store
+  }
+
+  it('add_event: project_id / area_id file it; the answer is the place\'s colour and says so', async () => {
+    const store = seed()
+    const inProject = (await call(deps(store), 'add_event', { title: 'Standup', start: '2026-10-07T09:00', project_id: P1 })).data!.added
+    expect(inProject).toMatchObject({ project_id: P1, color: 'Fern', color_hex: '#72BF8E', color_source: 'project' })
+    const inArea = (await call(deps(store), 'add_event', { title: 'Run', start: '2026-10-07T10:00', area_id: A1 })).data!.added
+    expect(inArea).toMatchObject({ area_id: A1, color: 'Rose', color_source: 'area' }) // the legacy blossom, as palette C's Rose
+    const plain = (await call(deps(store), 'add_event', { title: 'Plain', start: '2026-10-07T11:00' })).data!.added
+    expect(plain).toMatchObject({ color_source: 'none' })
+    expect(plain).not.toHaveProperty('color')
+    expect(store.cal.find((e) => e.id === inProject.id)).toMatchObject({ project_id: P1, area_id: null })
+  })
+
+  it('an own colour wins; the calendar says own / project / area / none, and a task\'s block follows its task', async () => {
+    const store = seed()
+    await call(deps(store), 'add_event', { title: 'Hand', start: '2026-10-07T09:00', project_id: P1, color: 'Wine' })
+    await call(deps(store), 'add_event', { title: 'Run', start: '2026-10-07T10:00', area_id: A1 })
+    await call(deps(store), 'add_event', { title: 'Plain', start: '2026-10-07T11:00' })
+    store.tasks.push(task(41, 'Filed task', { project_id: P1, scheduled_start: '2026-10-07T12:00:00Z', scheduled_end: '2026-10-07T13:00:00Z' }))
+    store.cal.push({ id: tid(950), title: 'Filed task', starts_at: '2026-10-07T12:00:00Z', ends_at: '2026-10-07T13:00:00Z', all_day: false, task_id: tid(41), type: 'task', source: 'native' })
+    const cal = (await call(deps(store), 'calendar', { from: '2026-10-07', to: '2026-10-07' })).data!.events as { title: string; color_source: string; color?: string }[]
+    const by = (t: string) => cal.find((e) => e.title === t)!
+    expect(by('Hand')).toMatchObject({ color: 'Wine', color_source: 'own' })
+    expect(by('Run')).toMatchObject({ color: 'Rose', color_source: 'area' })
+    expect(by('Plain')).toMatchObject({ color_source: 'none' })
+    expect(by('Filed task')).toMatchObject({ color: 'Fern', color_source: 'project' })
+  })
+
+  it('edit_event: file, move between place kinds, take out (null) — and clearing the colour resets to the place', async () => {
+    const store = seed()
+    const e = (await call(deps(store), 'add_event', { title: 'Hand', start: '2026-10-07T09:00', color: 'Wine' })).data!.added
+    expect((await call(deps(store), 'edit_event', { id: e.id, project_id: P1 })).data!.edited).toMatchObject({ color: 'Wine', color_source: 'own' })
+    const reset = await call(deps(store), 'edit_event', { id: e.id, color: null })
+    expect(reset.data!.edited).toMatchObject({ color: 'Fern', color_source: 'project' })
+    const moved = await call(deps(store), 'edit_event', { id: e.id, area_id: A1 })
+    expect(moved.data!.edited).toMatchObject({ area_id: A1, color_source: 'area' })
+    expect(moved.data!.edited).not.toHaveProperty('project_id') // an event is in a project or an area, not both
+    const out = await call(deps(store), 'edit_event', { id: e.id, area_id: null })
+    expect(out.data!.edited).toMatchObject({ color_source: 'none' })
+  })
+
+  it('refuses both at once and a place that isn\'t there, writing nothing', async () => {
+    const store = seed()
+    const n = store.cal.length
+    expect((await call(deps(store), 'add_event', { title: 'x', start: '2026-10-07T09:00', project_id: P1, area_id: A1 })).isError).toBe(true)
+    const gone = await call(deps(store), 'add_event', { title: 'x', start: '2026-10-07T09:00', project_id: tid(404) })
+    expect(gone.isError).toBe(true)
+    expect(store.cal).toHaveLength(n)
   })
 })

@@ -138,6 +138,8 @@ export interface SnapshotInput {
   hour24?: boolean
   tasks: readonly Task[]
   events: readonly CalendarEvent[]
+  /** Colour follows where it lives (calendar/blockColor useBlockColor): a block's own colour, else its project's, else its area's. */
+  colorOf?: (e: CalendarEvent) => { color: string | null }
   /** Today's Top 3 in order, the goal first (today/top3Order dayTop3). */
   top3: readonly Task[]
   dayN: number
@@ -254,7 +256,7 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
   // ── Today's timed blocks (running, or starting today), in palette C as the calendar draws them ──
   const goalId = i.top3[0]?.id ?? null
   const hue = (e: CalendarEvent): string => {
-    const own = swatchValue(e.color)
+    const own = swatchValue(i.colorOf ? i.colorOf(e).color : e.color)
     if (!isHex(own)) return e.type === 'event' && !e.task_id ? 'rose' : 'iris' // blockHue KIND_HUE
     return hexName(own)
   }

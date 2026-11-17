@@ -38,6 +38,7 @@ import { resolveTag, formatDuration } from '../tasks/taskDisplay'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
+import { useBlockColor } from './blockColor'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
 import { playOnce, reducedMotionNow, useMotionEnabled, useOverlayExit } from '../../lib/motion'
@@ -478,6 +479,7 @@ function DesktopCalendar() {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
+  const colorOf = useBlockColor() // colour follows where it lives (./blockColor)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const railRef = useRef<HTMLElement>(null)
   const gridRef = useRef<CalendarGridHandle>(null)
@@ -644,13 +646,13 @@ function DesktopCalendar() {
         // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
         const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
         return {
-          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e) && !gcalEditable(e), parent: parentTitleOf(e.task_id),
+          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: colorOf(e).color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e) && !gcalEditable(e), parent: parentTitleOf(e.task_id),
           goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
           ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held), over: slotOver(e, held) } : null),
         }
       })
     },
-    [visibleEvents, tasks, doneTaskIds, parentTitleOf, goalTaskId, today], // eslint-disable-line react-hooks/exhaustive-deps -- today: a new day re-reads the goal's date
+    [visibleEvents, tasks, doneTaskIds, parentTitleOf, goalTaskId, today, colorOf], // eslint-disable-line react-hooks/exhaustive-deps -- today: a new day re-reads the goal's date
   )
   const selectedEvent = selected ? findBlock(gridEvents, selected.id, selected.start) ?? null : null
 

@@ -114,8 +114,9 @@ export function swatchValue(color: string | null | undefined): string | null {
 }
 
 /** The colour a block is drawn in, for a dot or a square beside its title: its own, else its kind's. */
-export function blockSwatch(e: { color?: string | null; type?: string | null; task_id?: string | null }): string {
-  return e.color ? blockHue(e.color).c : (e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task).c
+export function blockSwatch<E extends { color?: string | null; type?: string | null; task_id?: string | null }>(e: E, colorOf?: (e: E) => { color: string | null }): string {
+  const color = colorOf ? colorOf(e).color : e.color // colour follows where it lives (./blockColor)
+  return color ? blockHue(color).c : (e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task).c
 }
 
 const custom = new Map<string, Hue>()

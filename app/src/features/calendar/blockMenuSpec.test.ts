@@ -19,7 +19,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
   beforeEach(() => setAppZone('Africa/Cairo'))
 
   it('5a a task block: when · project, the task as a quiet group, Unschedule ⌫, Delete last — no Repeat', () => {
-    const spec = blockMenuSpec(block({ task_id: 't1', type: 'task' }), { task: { title: 'Host all the AI in one place', status: 'todo' }, projectName: 'Forecasting', now: NOW })
+    const spec = blockMenuSpec(block({ task_id: 't1', type: 'task' }), { task: { title: 'Host all the AI in one place', status: 'todo' }, placeName: 'Forecasting', now: NOW })
     expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'unschedule', 'delete'])
     expect(spec[0]).toMatchObject({ label: 'Wed, Jul 29', sub: true })
     expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h', sub: true }) // Cairo, UTC+3
@@ -38,7 +38,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
   it('5c a plain block: Repeat, Link a task…, More (kind + busy, the deviation), Delete', () => {
     const spec = blockMenuSpec(block(), { now: NOW })
     expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'repeat', 'remind', 'link', 'more', 'delete'])
-    expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project', unset: true })
+    expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project or area', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
   })

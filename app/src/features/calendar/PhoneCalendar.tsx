@@ -38,6 +38,7 @@ import { usePrefsVersion } from '../../lib/prefs'
 import { SMART_LISTS } from './railDrop'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { useAreas } from '../areas/api'
+import { useBlockColor } from './blockColor'
 import { placeName } from '../tasks/move'
 import { takeOutsidePress, useDraft } from './createDraft'
 import { PhoneGrid, type BlockLook, type Carry, type PhoneGridHandle } from './PhoneGrid'
@@ -90,6 +91,7 @@ export function PhoneCalendar() {
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const { data: areas = [] } = useAreas()
+  const colorOf = useBlockColor()
   const online = useOnline()
   const marks = useOutboxMarks('calendar_events')
   const now = useMinuteNow()
@@ -182,11 +184,10 @@ export function PhoneCalendar() {
       }
       return v
     }
-  }, [tasks, taskById, projects, domains, today, goalTaskId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tasks, taskById, colorOf, today, goalTaskId]) // eslint-disable-line react-hooks/exhaustive-deps
   function lookOf(e: CalendarEvent): BlockLook {
     const task = e.task_id ? taskById.get(e.task_id) : undefined
-    const project = task?.project_id ? projects.find((p) => p.id === task.project_id) : undefined
-    const hue = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
+    const hue = colorOf(e).color // own, else the task's / event's project, else its area (./blockColor)
     // cal-looks ("Now" as drawn, as the desktop's): the accent at 24% for the fill, 45% for the edge, its text tone
     // for the time and the check — a swatch is its token (./blockHue), so Night Garden redraws it.
     const hueOf = hue ? blockHue(hue) : e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task

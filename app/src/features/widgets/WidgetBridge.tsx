@@ -4,6 +4,7 @@ import { useTasks } from '../tasks/api'
 import { todayListTasks } from '../tasks/grouping'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
+import { useBlockColor } from '../calendar/blockColor'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { useSlipping } from '../slipping/api'
@@ -47,6 +48,7 @@ export function WidgetBridge(): React.ReactNode {
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: projects = [] } = useProjects()
+  const colorOf = useBlockColor()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const { data: inbox = [] } = usePendingInboxItems()
@@ -93,6 +95,7 @@ export function WidgetBridge(): React.ReactNode {
     hour24,
     tasks,
     events,
+    colorOf,
     top3,
     dayN: dayOfJourney(firstRecord, now),
     phase: day.state.phase,

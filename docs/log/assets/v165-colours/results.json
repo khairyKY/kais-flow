@@ -1,0 +1,112 @@
+[
+  {
+    "name": "task block: its project's Fern",
+    "ok": true,
+    "detail": "var(--blk-fern)"
+  },
+  {
+    "name": "plain event: none of its own (the kind default)",
+    "ok": true,
+    "detail": "\"\""
+  },
+  {
+    "name": "hand-coloured block keeps its own Wine, though filed under Fern",
+    "ok": true,
+    "detail": "var(--blk-wine)"
+  },
+  {
+    "name": "Google event not filed: its calendar's own colour",
+    "ok": true,
+    "detail": "#4285F4"
+  },
+  {
+    "name": "Google event filed under the Fern project: Fern",
+    "ok": true,
+    "detail": "var(--blk-fern)"
+  },
+  {
+    "name": "details: the place row says \"No project or area\"",
+    "ok": true,
+    "detail": "[\"15m\",\"30m\",\"45m\",\"1h\",\"1h30\",\"2h\",\"Wed, Oct 21Starts▸\",\"Wed, Oct 21 · 12:00 PMEnds▸\",\"11:00 AM – 12:00 PM1h▸\",\"All day\",\"No project or area▸\",\"Does not repeat▸\",\"No reminder▸\",\"Link a task…▸\",\"More▸\",\"Delete⌫\"]"
+  },
+  {
+    "name": "the picker lists areas and projects, no domains",
+    "ok": true,
+    "detail": "[\"HealthArea\",\"Pricing siteProject\",\"UncolouredProject\",\"None✓\"]"
+  },
+  {
+    "name": "filing under the area writes area_id and clears project_id",
+    "ok": true,
+    "detail": "{\"a\":\"a0000000-0000-4000-8000-000000000001\",\"p\":null}"
+  },
+  {
+    "name": "the event turns the area's colour (hydrangea drawn as Lagoon)",
+    "ok": true,
+    "detail": "var(--blk-lagoon)"
+  },
+  {
+    "name": "right-click menu: \"Custom · Reset to Pricing site colour\"",
+    "ok": true,
+    "detail": "Custom · Reset to Pricing site colour"
+  },
+  {
+    "name": "Reset writes colour null",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "…and the block follows its project again (Fern)",
+    "ok": true,
+    "detail": "var(--blk-fern)"
+  },
+  {
+    "name": "a block with no colour of its own offers no Reset",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the project page offers palette C's 16 swatches",
+    "ok": true,
+    "detail": "[\"Rose\",\"Clay\",\"Ochre\",\"Olive\",\"Fern\",\"Lagoon\",\"Cornflower\",\"Iris\",\"Wine\",\"Rust\",\"Honey\",\"Moss\",\"Pine\",\"Tide\",\"Indigo\",\"Heather\"]"
+  },
+  {
+    "name": "picking Clay writes the project's colour",
+    "ok": true,
+    "detail": "\"#E29572\""
+  },
+  {
+    "name": "the task block recoloured to Clay, live",
+    "ok": true,
+    "detail": "var(--blk-clay)"
+  },
+  {
+    "name": "the reset block (now following) recoloured to Clay too",
+    "ok": true,
+    "detail": "var(--blk-clay)"
+  },
+  {
+    "name": "the event filed under the area stays Lagoon",
+    "ok": true,
+    "detail": "var(--blk-lagoon)"
+  },
+  {
+    "name": "the Google event filed under the project follows it",
+    "ok": true,
+    "detail": "var(--blk-clay)"
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the task block is drawn in its project's Fern",
+    "ok": true,
+    "detail": "top: 576px; height: 64px; left: 4px; width: calc(100% - 20px); --pc-fill: color-mix(in srgb, var(--blk-fern) var(--blk-fill), transparent); --pc-edge: color-mix(in srgb, var(--blk-fern) 45%, transpare"
+  },
+  {
+    "name": "phone: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

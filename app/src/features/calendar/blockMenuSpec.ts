@@ -24,7 +24,7 @@ export interface BlockMenuEntry {
   hint?: string
   /** Opens a submenu / picker. */
   sub?: boolean
-  /** Nothing set yet ("No project", "Does not repeat") — drawn quiet. */
+  /** Nothing set yet ("No project or area", "Does not repeat") — drawn quiet. */
   unset?: boolean
   /** Starts a group: a dashed hairline above. */
   divider?: boolean
@@ -38,7 +38,8 @@ export interface BlockMenuEntry {
 export interface BlockMenuContext {
   /** The task behind a task block, when it's loaded. */
   task?: Pick<Task, 'title' | 'status'> | null
-  projectName?: string | null
+  /** The project's or area's name the event is filed under (0099); none = "No project or area". */
+  placeName?: string | null
   /** A task block that ran out unfinished: Replan… (the grid's own "Overdue · Replan" link). */
   missed?: boolean
   now?: Date
@@ -189,7 +190,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
           ? []
           : [{ key: 'time' as const, label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true }]),
     ...(plain ? [{ key: 'allday' as const, label: 'All day', on: e.all_day }] : []),
-    { key: 'project', label: ctx.projectName ?? 'No project', unset: !ctx.projectName, sub: true },
+    { key: 'project', label: ctx.placeName ?? 'No project or area', unset: !ctx.placeName, sub: true },
   ]
   // A task block repeats through its task's own rule, never on the calendar.
   if (!e.task_id) out.push({ key: 'repeat', label: repeatLabel(e.recurrence_rule), unset: !e.recurrence_rule, sub: true })

@@ -1,3 +1,4 @@
+import { PlaceSwatches } from '../calendar/formFields'
 import { useEffect, useRef, useState } from 'react'
 import { useDomains } from '../domains/api'
 import { createProject } from './api'
@@ -120,17 +121,6 @@ export function NewProjectModal({
     close()
   }
 
-  const colorPalette = [
-    'var(--acc-terra)',
-    'var(--acc-moss)',
-    'var(--acc-lavender-deep)',
-    'var(--acc-gold)',
-    'var(--acc-hydrangea)',
-    'var(--acc-sage)',
-    '#7a4a52',
-    '#8b8471',
-  ]
-
   const fields = (
     <>
           {/* Type Selector */}
@@ -216,23 +206,7 @@ export function NewProjectModal({
           {/* Color Picker */}
           <div style={{ marginTop: 16 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>Color</div>
-            <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-              {colorPalette.map((c) => (
-                <span
-                  key={c}
-                  onClick={() => setColor(c)}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: c,
-                    cursor: 'pointer',
-                    outline: color === c ? '1.5px solid var(--paper-parchment)' : 'none',
-                    boxShadow: color === c ? `0 0 0 3px ${c}` : 'none',
-                  }}
-                />
-              ))}
-            </div>
+            <PlaceSwatches value={color} onPick={setColor} />
           </div>
 
           {/* Starting Milestones */}

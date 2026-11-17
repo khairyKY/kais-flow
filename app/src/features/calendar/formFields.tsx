@@ -3,6 +3,7 @@ import { DateField } from '../../components/DatePicker'
 import { TimeField } from './TimeField'
 import { Icon } from '../../components/Icon'
 import { BLOCK_SWATCHES, blockHue, swatchValue } from './blockHue'
+import { placeSwatch } from '../../../../supabase/functions/_shared/colorFollows.ts'
 
 // ── Small form atoms shared by TaskEditorPage / the block menus —
 // Editor.dc.html's .flabel / .fhelp / .finput / .fsel / .seg classes, ported as
@@ -76,10 +77,12 @@ const TRAY_CSS = `
 .kf-sw-custom > i { width: 10px; height: 10px; border-radius: 50%; }
 .kf-sw-custom > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .kf-sw:focus-visible, .kf-sw-custom:focus-within { outline: none; box-shadow: var(--focus-ring); }
+.kf-sw-reset { grid-column: 1 / -1; font-family: var(--font-ui); font-size: var(--fs-caption); color: var(--ink-muted); }
+.kf-sw-reset button { padding: 0; border: 0; background: none; font: inherit; color: var(--acc-terra); text-decoration: underline; cursor: pointer; }
 `
 
 /** `columns`: 8 as drawn (a clear row over a deep row); the phone's sheet takes 10, two rows, so its rows stay in view. */
-export function SwatchTray({ value, onChange, size = 20, columns = 8 }: { value: string | null; onChange: (v: string | null) => void; size?: number; columns?: number }) {
+export function SwatchTray({ value, onChange, size = 20, columns = 8, reset }: { value: string | null; onChange: (v: string | null) => void; size?: number; columns?: number; /** "Reset to Pricing colour": shown under the swatches while the colour is the item's own ("Custom"); one tap clears it (null), so it follows its project or area again. */ reset?: string }) {
   const cur = swatchValue(value)
   const custom = !!cur && !BLOCK_SWATCHES.some((s) => s.value === cur)
   const input = useRef<HTMLInputElement>(null)
@@ -114,6 +117,33 @@ export function SwatchTray({ value, onChange, size = 20, columns = 8 }: { value:
         Custom
         <input ref={input} type="color" aria-label="Custom colour" defaultValue={custom ? cur!.toLowerCase() : '#b59ce3'} /* ds-ok: the picker's starting colour (Iris) */ />
       </label>
+      {reset && value && (
+        <div className="kf-sw-reset">
+          <span>Custom</span> · <button type="button" onClick={() => onChange(null)}>{reset}</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** An area's or a project's colour (Kai 2026-11-16): palette C's 16 swatches, in the calendar's own tokens. What inherits it
+ * (tasks, their blocks, events) redraws as soon as it changes (./blockColor); a colour saved before palette C shows as its
+ * nearest swatch ticked. */
+export function PlaceSwatches({ value, onPick, size = 20, label = 'Colour' }: { value: string | null | undefined; onPick: (hex: string) => void; size?: number; label?: string }) {
+  const cur = placeSwatch(value)
+  return (
+    <div role="group" aria-label={label} style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center', maxWidth: 8 * (size + 7) }}>
+      {BLOCK_SWATCHES.map((s) => (
+        <button
+          key={s.name}
+          type="button"
+          title={s.name}
+          aria-label={s.name}
+          aria-pressed={cur === s.value}
+          onClick={() => onPick(s.value)}
+          style={{ width: size, height: size, padding: 0, border: 'none', borderRadius: '50%', background: blockHue(s.value).c, cursor: 'pointer', outline: cur === s.value ? '1.5px solid var(--paper-linen)' : 'none', boxShadow: cur === s.value ? `0 0 0 3px ${blockHue(s.value).c}` : 'none' }}
+        />
+      ))}
     </div>
   )
 }

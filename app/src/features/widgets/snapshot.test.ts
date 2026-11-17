@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildFocus, buildSnapshot, mask, type FocusInput, type SnapshotInput } from './snapshot'
+import { makeColorResolver } from '../../../../supabase/functions/_shared/colorFollows.ts'
 import { applyOps, parseQueue, type OpWrites } from './queue'
 import type { CalendarEvent, Routine, RoutineCompletion, Task } from '../../lib/types'
 
@@ -72,6 +73,12 @@ describe('buildSnapshot', () => {
     expect(s.blocks.map((b) => [b.id, b.color, b.goal])).toEqual([['b0', 'rose', false], ['b1', 'iris', true], ['b2', 'moss', false], ['b3', 'iris', false]])
     const own = buildSnapshot(input({ events: [event('c1', 'Own', '10:00', '11:00', { color: '#47BFC5' }), event('c2', 'Custom', '12:00', '13:00', { color: '#123456' })] }))
     expect(own.blocks.map((b) => b.color)).toEqual(['lagoon', 'indigo'])
+  })
+
+  it("colour follows where it lives: a block with none of its own draws its project's (or area's) swatch; its own wins", () => {
+    const colorOf = makeColorResolver([{ id: 'p1', color: '#72BF8E' }], [{ id: 'a1', color: 'var(--acc-hydrangea)' }], [{ id: 'tk', project_id: 'p1', area_id: null }])
+    const events = [event('f1', 'Task in a project', '10:00', '11:00', { task_id: 'tk' }), event('f2', 'Filed in an area', '12:00', '13:00', { area_id: 'a1' }), event('f3', 'Own wins', '14:00', '15:00', { color: '#B36670', area_id: 'a1' }), event('f4', 'Nowhere', '16:00', '17:00')]
+    expect(buildSnapshot(input({ events, colorOf })).blocks.map((b) => b.color)).toEqual(['fern', 'lagoon', 'wine', 'iris'])
   })
 
   it("lists Today's tasks apart from the Top 3, overdue and Also open, and counts Also open", () => {

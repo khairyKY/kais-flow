@@ -96,11 +96,17 @@ describe('resolveTag', () => {
 
   it('prefers area over project and domain', () => {
     const t = task({ area_id: 'a1', project_id: 'p1', domain_id: 'd1' })
-    expect(resolveTag(t, domains, projects, areas)).toEqual({ label: 'Health', color: '#D4A8B0' })
+    // the dot is the colour the task follows (calendar/blockColor): the area's, drawn as its palette C swatch (blossom → Rose)
+    expect(resolveTag(t, domains, projects, areas)).toEqual({ label: 'Health', color: '#E58F99' })
   })
   it('falls back to project (using its domain color) when no area is set', () => {
     const t = task({ project_id: 'p1', domain_id: 'd1' })
     expect(resolveTag(t, domains, projects, areas)).toEqual({ label: 'Pricing', color: '#8A9A7E' })
+  })
+  it("the dot follows the project's colour, then the area's, over the domain's", () => {
+    const coloured: Project[] = [{ ...projects[0], color: '#72BF8E' }]
+    expect(resolveTag(task({ project_id: 'p1', domain_id: 'd1' }), domains, coloured, areas)).toEqual({ label: 'Pricing', color: '#72BF8E' })
+    expect(resolveTag(task({ area_id: 'a1', project_id: 'p1' }), domains, coloured, areas)).toEqual({ label: 'Health', color: '#72BF8E' })
   })
   it('falls back to domain when neither area nor project is set', () => {
     const t = task({ domain_id: 'd1' })

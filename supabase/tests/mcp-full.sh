@@ -637,6 +637,25 @@ expect "B's rows untouched" "$BEFORE_B" "$(sql -c "select concat_ws(' | ',
 expect "every activity row the tools wrote says source mcp" "0" \
   "$(sql -c "select count(*) from activity_log where user_id in ('$A_ID', '$B_ID') and created_at > '$SUITE_START' and payload->>'source' is distinct from 'mcp'")"
 
+section "colour follows where it lives (0099): an event filed under a project or an area"
+export FP FA FE
+FP=$(sql -c "with x as (insert into projects (user_id, name, color) values ('$A_ID', 'Full Fern project', '#72BF8E') returning id) select id from x")
+FA=$(sql -c "with x as (insert into areas (user_id, name, color, sort_order) values ('$A_ID', 'Full Rose area', 'var(--acc-blossom)', 9) returning id) select id from x")
+call "add_event: filed under the project" "$KA" add_event '{title: "Full filed", start: "2028-02-01T09:00", project_id: env.FP}'
+FE=$(j .added.id)
+expect "answer: its project's Fern, and where it came from" "Fern #72BF8E project" "$(j '"\(.added.color) \(.added.color_hex) \(.added.color_source)"')"
+expect "row: the project, no area, no colour of its own" "$FP - -" "$(sql -c "select concat_ws(' ', project_id, coalesce(area_id::text, '-'), coalesce(color, '-')) from calendar_events where id = '$FE'")"
+call "edit_event: into the area instead" "$KA" edit_event '{id: env.FE, area_id: env.FA}'
+expect "row: the area, out of the project" "- $FA" "$(sql -c "select concat_ws(' ', coalesce(project_id::text, '-'), area_id) from calendar_events where id = '$FE'")"
+call "calendar 2028-02-01" "$KA" calendar '{from: "2028-02-01", to: "2028-02-01"}'
+expect "the area's legacy blossom is palette C's Rose" "Rose area" "$(j "[.events[] | select(.id == \"$FE\") | \"\(.color) \(.color_source)\"] | join(\",\")")"
+call "edit_event: its own colour" "$KA" edit_event '{id: env.FE, color: "Wine"}'
+expect "own wins" "Wine own" "$(j '"\(.edited.color) \(.edited.color_source)"')"
+call "edit_event: colour cleared, and out of the area" "$KA" edit_event '{id: env.FE, color: null, area_id: null}'
+expect "no colour left, none" "none" "$(j .edited.color_source)"
+refused "add_event: both a project and an area" "$KA" add_event '{title: "Full both", start: "2028-02-01T10:00", project_id: env.FP, area_id: env.FA}' "not both"
+refused "add_event: B's project" "$KA" add_event '{title: "Full B", start: "2028-02-01T11:00", project_id: env.PB}' "No project with id"
+
 section "the function's own log"
 expect "no database error behind any call" "0" "$(grep -c -E '^mcp( tool [a-z_]+)?:' "$TMP/harness.log")"
 

@@ -9,6 +9,7 @@ import { computeStreak } from '../routines/streaks'
 import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
+import { useBlockColor } from '../calendar/blockColor'
 import { blockHue, KIND_HUE } from '../calendar/blockHue'
 import { upNextEvents } from '../today/upNext'
 import { beginFocus } from '../today/startFocus'
@@ -106,6 +107,7 @@ export function FocusPage() {
   const { data: people = [] } = peopleQ
   const { data: interactions = [] } = interactionsQ
   const { data: events = [] } = useCalendarEvents()
+  const colorOf = useBlockColor() // colour follows where it lives
 
   // Only the first entry's date is used (the "days count"); this used to download the whole log.
   const activityQ = useQuery<Pick<ActivityLogEntry, 'created_at'>[]>({
@@ -393,10 +395,10 @@ export function FocusPage() {
   const block: FocusBlock = useMemo(
     () => {
       if (storeBlock) return storeBlock
-      const b = blockFor(activeTask, events, settings, minuteNow)
+      const b = blockFor(activeTask, events, settings, minuteNow, null, colorOf)
       return { ...b, rounds: Math.max(b.rounds, kept + 1) } // rounds already kept outside a block never end its day
     },
-    [storeBlock, activeTask, events, settings, minuteNow, kept],
+    [storeBlock, activeTask, events, settings, minuteNow, kept, colorOf],
   )
   // Up next: today's Top 3 first, then today's other open tasks — never the one in focus.
   const upNext = useMemo(() => {
@@ -1080,7 +1082,7 @@ export function FocusPage() {
           </div>
         ))}
         {nextEvent && (
-          <div className="fd-next-block" style={{ background: `color-mix(in srgb, ${hueOfEvent(nextEvent).c} var(--blk-fill), transparent)`, color: hueOfEvent(nextEvent).ink }}>
+          <div className="fd-next-block" style={{ background: `color-mix(in srgb, ${hueOfEvent(nextEvent, colorOf).c} var(--blk-fill), transparent)`, color: hueOfEvent(nextEvent, colorOf).ink }}>
             Next block · {nextEvent.title} · {timeText(new Date(nextEvent.starts_at), zone)}
           </div>
         )}
@@ -1104,8 +1106,9 @@ export function FocusPage() {
 }
 
 /** A block's accent and text tone: its own colour, else its kind's (calendar/blockHue). */
-function hueOfEvent(e: Pick<CalendarEvent, 'color' | 'type' | 'task_id'>) {
-  return e.color ? blockHue(e.color) : e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
+function hueOfEvent(e: CalendarEvent, colorOf: (e: CalendarEvent) => { color: string | null }) {
+  const color = colorOf(e).color
+  return color ? blockHue(color) : e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
 }
 
 const minOfDay = (d: Date, zone: string) => {
@@ -1116,6 +1119,7 @@ const minOfDay = (d: Date, zone: string) => {
 /** D3's hour column: six hours around the block, today's other blocks as they are, the focus block split into
  * its segments in its own colour — no flowers here — and the now line. */
 function HourColumn({ block, tl, events, zone }: { block: FocusBlock; tl: Timeline; events: readonly CalendarEvent[]; zone: string }) {
+  const colorOf = useBlockColor()
   const now = useMinuteNow()
   const day = zoneDateKey(new Date(block.srcStart), zone)
   const startMin = minOfDay(new Date(block.srcStart), zone)
@@ -1143,7 +1147,7 @@ function HourColumn({ block, tl, events, zone }: { block: FocusBlock; tl: Timeli
       {others.map((e) => {
         const p = placed(new Date(e.starts_at), new Date(e.ends_at))
         if (!p) return null
-        const h = hueOfEvent(e)
+        const h = hueOfEvent(e, colorOf)
         return (
           <div key={e.id} className="fd-hblk" style={{ ...p, background: `color-mix(in srgb, ${h.c} var(--blk-fill), transparent)`, color: h.ink }}>
             <b>{e.title}</b>
