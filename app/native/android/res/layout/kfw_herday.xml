@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W42 · Her day (4×2): her initial in Heather and her name, the level, her Top 3 count; her block now and next in
+     Heather with the dashed edge; at Details her goal. Render's family style; HerDay fills it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="26dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/her_av" android:layout_width="22dp" android:layout_height="22dp" android:layout_marginEnd="7dp" android:background="@drawable/kfw_circle_her" android:gravity="center" android:fontFamily="sans-serif-medium" android:textColor="@color/kfw_blk_heather_fill" android:textSize="11sp" />
+            <TextView android:id="@+id/head" style="@style/KfW.Cap" />
+            <TextView android:id="@+id/head_q" style="@style/KfW.Q" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="4dp" />
+            <include layout="@layout/kfw_stale_stamp" />
+            <TextView android:id="@+id/head_r" style="@style/KfW.Q" android:layout_marginStart="8dp" android:fontFeatureSettings="tnum" android:visibility="gone" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/rows" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+        <TextView android:id="@+id/empty" style="@style/KfW.Q" android:layout_marginTop="10dp" android:visibility="gone" />
+        <LinearLayout android:id="@+id/goal_row" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:gravity="center_vertical" android:orientation="horizontal" android:visibility="gone">
+            <TextView style="@style/KfW.Title" android:layout_marginEnd="6dp" android:text="✶" android:textColor="@color/kfw_gold" android:textSize="12.5sp" />
+            <TextView android:id="@+id/goal_t" style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:maxLines="1" android:ellipsize="end" android:textSize="12.5sp" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

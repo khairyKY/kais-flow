@@ -80,4 +80,6 @@
     <string name="kfw_desc_40">The day bar, Next with its countdown, and the goal.</string>
     <string name="kfw_label_41">Day bar · large</string>
     <string name="kfw_desc_41">The day bar, Next, the goal, the Top 3 to tick, and a capture bar.</string>
+    <string name="kfw_label_42">Her day</string>
+    <string name="kfw_desc_42">The person you share with: her block now and next, and at Details her goal and Top 3. Greys out after a day without a refresh.</string>
 </resources>
