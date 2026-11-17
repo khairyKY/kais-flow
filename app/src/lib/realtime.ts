@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { useAuth } from '../features/auth/AuthProvider'
 import { useAppSettings } from './settings'
-import { useProjects } from '../features/projects/api'
+import type { Project } from './types'
 
 const SYNCED_TABLES = [
   'domains',
@@ -125,8 +125,16 @@ export function useRealtimeSync() {
  * rows are mine (a tick by the other person is written under my user_id). */
 export function useSharedListsRealtime() {
   const uid = useAuth().session?.user.id
-  const { data: projects } = useProjects()
-  const ids = (projects ?? []).filter((p) => p.shared_circle_id && p.user_id && p.user_id !== uid).map((p) => p.id).sort().slice(0, 100).join(',')
+  // The ids come from the projects cache (read here, not through a hook: this file stays free of the features' imports).
+  const [ids, setIds] = useState('')
+  useEffect(() => {
+    const read = () => {
+      const rows = queryClient.getQueryData<Project[]>(['projects']) ?? []
+      setIds(rows.filter((p) => p.shared_circle_id && p.user_id && p.user_id !== uid).map((p) => p.id).sort().slice(0, 100).join(','))
+    }
+    read()
+    return queryClient.getQueryCache().subscribe((e) => { if (e.query.queryKey[0] === 'projects') read() })
+  }, [uid])
   useEffect(() => {
     if (!uid || !ids) return
     let channel: ReturnType<typeof supabase.channel> | null = null

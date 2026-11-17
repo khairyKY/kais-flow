@@ -10,6 +10,7 @@ import { useAppZone } from '../../lib/appZone'
 import { useToastStore } from '../../lib/toastStore'
 import { useAuth } from '../auth/AuthProvider'
 import { useTasks } from '../tasks/api'
+import { useOpenTask } from '../tasks/openTask'
 import { useMinuteNow } from '../today/useMinuteNow'
 import type { Project, Task } from '../../lib/types'
 import { useConnections } from './api'
@@ -27,16 +28,16 @@ function useFaces(project: Project) {
 }
 
 function Row({ t, project }: { t: Task; project: Project }) {
-  const navigate = useNavigate()
+  const openTask = useOpenTask()
   const zone = useAppZone()
   const now = useMinuteNow()
   const { uid, partner } = useFaces(project)
   const done = t.status === 'done'
   const who = faceOf(done ? t.done_by : t.added_by, uid, partner)
   return (
-    <div className={`sl-row${done ? ' is-done' : ''}`}>
+    <div id={`task-${t.id}`} className={`sl-row${done ? ' is-done' : ''}`}>
       <Checkbox checked={done} onChange={() => tickItem(t, uid)} label={done ? `Reopen ${t.title}` : `Tick ${t.title}`} />
-      <button type="button" className="sl-title" onClick={() => navigate(`/tasks/${t.id}`)}>{t.title}</button>
+      <button type="button" className="sl-title" onClick={(e) => openTask(t.id, undefined, e.currentTarget.closest('.sl-row'))}>{t.title}</button>
       <span className="sl-by" title={done ? `Ticked by ${who.name}` : `Added by ${who.name}`}>
         <Avatar name={who.name} her={!who.mine} size={22} />
         {done && <span className="sl-when">{tickWhen(t.completed_at, now, zone)}</span>}
