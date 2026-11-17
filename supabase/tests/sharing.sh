@@ -175,7 +175,7 @@ section "connect: the code"
 rpc "$A_JWT" share_invite_create '{"p_relation":"partner"}'
 INV=$BODY; CODE_A=$(jqe .code "$INV")
 expect "the code is 8 characters of A-Z and 2-9 without 0/O/1/I" "true" "$([[ "$CODE_A" =~ ^[A-HJ-NP-Z2-9]{8}$ ]] && echo true || echo "false($CODE_A)")"
-expect "it is good for 24 hours" "true" "$(sql -c "select expires_at between now() + interval '23 hours 59 minutes' and now() + interval '24 hours 1 minute' from share_invites where code = '$CODE_A'")"
+expect "it is good for 24 hours" "t" "$(sql -c "select expires_at between now() + interval '23 hours 59 minutes' and now() + interval '24 hours 1 minute' from share_invites where code = '$CODE_A'")"
 rpc "$A_JWT" share_invite_create '{"p_relation":"sibling"}'
 expect "a relation outside Partner / Family / Friend is refused" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
 rpc "$A_JWT" share_invite_peek "{\"p_code\":\"$CODE_A\"}"
@@ -193,7 +193,7 @@ rpc "$B_JWT" share_invite_accept "{\"p_code\":\"$CODE_A\"}"
 expect "a used code fails, and says what a wrong one says" "false bad_code" "$(jqe '[.ok, .error] | map(tostring) | join(" ")')"
 rpc "$C_JWT" share_invite_peek "{\"p_code\":\"$CODE_A\"}"
 expect "…for a third person too" "false bad_code" "$(jqe '[.ok, .error] | map(tostring) | join(" ")')"
-expect "one circle, two members, two grants; Partner = Details both ways, the lane on" "1 2 2 details details true" "$(sql -c "select concat_ws(' ', (select count(*) from circles), (select count(*) from circle_members), (select count(*) from share_grants), (select string_agg(level, ' ') from share_grants), (select bool_and(show_lane) from circle_members))" | sed 's/details details/details details/')"
+expect "one circle, two members, two grants; Partner = Details both ways, the lane on" "1 2 2 details details t" "$(sql -c "select concat_ws(' ', (select count(*) from circles), (select count(*) from circle_members), (select count(*) from share_grants), (select string_agg(level, ' ') from share_grants), (select bool_and(show_lane) from circle_members))" | sed 's/details details/details details/')"
 
 # an expired code, a cancelled code, wrong tries
 rpc "$A_JWT" share_invite_create '{"p_relation":"family"}'; CODE_X=$(jqe .code)
@@ -284,7 +284,8 @@ section "a third user sees nothing"
 day "$C_JWT" "$A_ID"; expect "C asking for A" "null" "$(jqe '.level | tostring')"
 day "$C_JWT" "$B_ID"; expect "C asking for B" "null" "$(jqe '.level | tostring')"
 for t in circles circle_members share_grants share_pings share_invites share_links; do
-  api GET "$C_JWT" "/rest/v1/$t?select=id"
+  col=id; [ "$t" = share_pings ] && col=user_id
+  api GET "$C_JWT" "/rest/v1/$t?select=$col"
   expect "C reads no row of $t" "closed" "$(closed)"
 done
 rpc "$C_JWT" share_connections; expect "C has no connections" "[]" "$BODY"
@@ -360,7 +361,7 @@ api POST "$A_JWT" "/rest/v1/share_links?select=id" "{\"token_hash\":\"$(sha "$(n
 expect "Details is not offered on a link" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
 api GET "$A_JWT" "/rest/v1/share_links?select=token_hash"
 expect "the app can't read a hash back" "true" "$([ "$CODE" = 401 ] || [ "$CODE" = 403 ] && echo true || echo "false($CODE)")"
-expect "a link is stored as its SHA-256 only, 30 days" "true" "$(sql -c "select (token_hash = '$(sha "$L_BUSY")' and expires_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 minute') from share_links where level = 'busy' and user_id = '$A_ID'")"
+expect "a link is stored as its SHA-256 only, 30 days" "t" "$(sql -c "select (token_hash = '$(sha "$L_BUSY")' and expires_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 minute') from share_links where level = 'busy' and user_id = '$A_ID'")"
 
 view "nonsense"; expect "a malformed token" "401" "$CODE"
 view "$(new_token)"; expect "a well-formed token nobody holds" "401" "$CODE"
@@ -388,7 +389,7 @@ view "$L_BUSY"; expect "…and it can be turned back on" "200" "$CODE"
 sql -c "update share_links set expires_at = now() - interval '1 minute' where id = '$LID'" >/dev/null
 view "$L_BUSY"; expect "after its 30 days it is gone" "410 expired" "$CODE $(jqe .reason)"
 api PATCH "$A_JWT" "/rest/v1/share_links?id=eq.$LID&select=id" "{\"expires_at\":\"$(date -u -d '+400 days' +%Y-%m-%dT%H:%M:%SZ)\"}"
-expect "Renew: one tap pushes it out, never past 30 days from now" "true" "$(sql -c "select expires_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 minute' from share_links where id = '$LID'")"
+expect "Renew: one tap pushes it out, never past 30 days from now" "t" "$(sql -c "select expires_at between now() + interval '29 days 23 hours' and now() + interval '30 days 1 minute' from share_links where id = '$LID'")"
 view "$L_BUSY"; expect "…and the link works again" "200" "$CODE"
 # another user's link cannot be managed by A, and C's own link only ever shows C
 api PATCH "$B_JWT" "/rest/v1/share_links?id=eq.$LID&select=id" '{"revoked_at":"2020-01-01T00:00:00Z"}'; expect "B can't stop A's link" "[]" "$BODY"
