@@ -31,8 +31,10 @@
 
 alter table projects add column if not exists shared_circle_id uuid references circles(id) on delete set null;
 create index if not exists projects_shared_circle on projects (shared_circle_id) where shared_circle_id is not null;
-alter table tasks add column if not exists added_by uuid references auth.users(id) on delete set null;
-alter table tasks add column if not exists done_by uuid references auth.users(id) on delete set null;
+-- Plain ids, no foreign key: a person who deletes their account leaves a stale id (shown as "Someone"), and an FK's own set-null
+-- update would run through the tick rules below.
+alter table tasks add column if not exists added_by uuid;
+alter table tasks add column if not exists done_by uuid;
 
 -- ---------------------------------------------------------------------------------------------
 -- Who may touch a shared list. security definer so the policies below don't recurse through RLS.
