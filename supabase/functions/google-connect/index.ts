@@ -10,6 +10,7 @@
 //   { action: 'calendars' }            → { calendars, chosen }   re-read the account's calendar list
 //   { action: 'choose', ids }          → { chosen }    which calendars show; an unticked one's events go
 //   { action: 'mirror', on }           → { mirror }    "Show my plan in Google as busy"; off deletes ours there
+//   { action: 'share_events', on }     → { share_events }  "Show events I share with someone in Google" (partner sharing P2); the next sync writes / removes them
 //   { action: 'disconnect' }           → { ok }        delete ours in Google, revoke, drop every synced event and the row
 //
 // Google (GET, no session — the reason this function runs with verify_jwt = false, config.toml):
@@ -167,6 +168,14 @@ Deno.serve(async (req) => {
       // On: the app runs a sync next, which writes them.
       if (!on && saved.can_write && saved.refresh_token) await clearMirror(saved.refresh_token)
       return jsonResponse(req, { mirror: on })
+    }
+
+    if (body?.action === 'share_events') {
+      if (typeof body.on !== 'boolean') return jsonResponse(req, { error: 'bad_request' }, 400)
+      const on = body.on
+      const saved = await patchRow(db, userId, (d) => ({ ...d, share_events: on }))
+      if (typeof saved === 'string') return jsonResponse(req, { error: saved }, saved === 'busy' ? 409 : 404)
+      return jsonResponse(req, { share_events: on })
     }
 
     if (body?.action === 'disconnect') {

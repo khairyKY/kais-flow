@@ -20,6 +20,7 @@ import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from '.
 import { spanMinutes, taskOnBlock, withLength } from '../../../../supabase/functions/_shared/blockLength.ts'
 import { planScope, type Scope, type SeriesChange } from './scope'
 import { noteLocalWrite } from './blockMotion'
+import { dropped as sharedDropped } from '../sharing/sharedPure'
 import { gcalApply, gcalDelete, gcalEditable, gcalRepeats, gcalRestore, gcalUndo, gcalWrite, type GcalChange } from './gcal'
 
 const fetchEvents = ({ signal }: { signal: AbortSignal }) =>
@@ -28,7 +29,8 @@ const fetchEvents = ({ signal }: { signal: AbortSignal }) =>
     undefined,
     signal,
   )
-const live = (events: CalendarEvent[]) => events.filter((e) => !e.deleted_at)
+// A shared proposal nobody answered drops when it starts (migration 0101's sweep removes the rows); until then it is already hidden.
+const live = (events: CalendarEvent[]) => { const now = new Date(); return events.filter((e) => !e.deleted_at && !(e.shared_id && sharedDropped(e, now))) }
 
 /** The stored rows — a repeating event is ONE row here. For look-ups by a stored id (Activity, a
  * search hit) and anything that must see the series itself. */
@@ -281,7 +283,8 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
 export function copyEvent(event: CalendarEvent, when?: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'>): { copy: CalendarEvent; undo: () => void } {
   const { seriesId: _occurrenceOf, ...rest } = event
   const at = nowIso()
-  const copy: CalendarEvent = { ...rest, ...when, id: crypto.randomUUID(), recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
+  // A copy is a plain event: the link to a shared event stays with the original.
+  const copy: CalendarEvent = { ...rest, ...when, id: crypto.randomUUID(), shared_id: null, shared_with: null, shared_circle: null, share_status: null, share_peer_status: null, share_edited_by: null, recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
   writeEvent(copy)
   logActivity('calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: event.seriesId ?? event.id })
   return { copy, undo: () => writeEvent(copy, 'delete') }

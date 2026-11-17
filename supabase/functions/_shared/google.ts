@@ -56,6 +56,8 @@ export interface GoogleData {
   synced_at?: string | null
   can_write?: boolean
   mirror?: boolean
+  /** Shared events (partner sharing P2, migration 0101): "Show events I share with someone in Google", per side; absent = on. */
+  share_events?: boolean
 }
 
 // ── OAuth ───────────────────────────────────────────────────────────────────────────────────────
@@ -432,6 +434,9 @@ export interface NativeRow extends SeriesRow {
   title: string
   source: string
   busy?: boolean | null
+  /** A shared event (0101): its link id, and my answer ('invited' = a proposal I haven't answered). */
+  shared_id?: string | null
+  share_status?: string | null
 }
 
 export interface MirrorBody {
@@ -439,7 +444,7 @@ export interface MirrorBody {
   start: { dateTime: string }
   end: { dateTime: string }
   transparency: 'opaque' | 'transparent'
-  visibility: 'private'
+  visibility: 'private' | 'default'
   reminders: { useDefault: false }
   extendedProperties: { private: Record<string, string> }
 }
@@ -454,8 +459,11 @@ export interface GMirrored extends GEvent {
 export const isMirrored = (g: GMirrored): boolean => !!g.id && g.extendedProperties?.private?.[MIRROR_TAG] === '1' && !!g.extendedProperties.private[MIRROR_KEY]
 
 /** What Google should hold, keyed by our (occurrence) id. A block marked Free stays free there too. */
-export function mirrorBodies(rows: readonly NativeRow[], window: { start: Date; end: Date }, zone: string, between: RuleBetween): Map<string, MirrorBody> {
-  const live = rows.filter((r) => r.source === 'native' && !r.all_day && !r.deleted_at)
+/** `plan`: "Show my plan in Google as busy" (every ordinary block, private); `shared`: "Show events I share with someone" - a shared event
+ * that has been accepted goes out as an ORDINARY event (its title, not private), whether or not the plan is on. Each switch is its own side's. */
+export function mirrorBodies(rows: readonly NativeRow[], window: { start: Date; end: Date }, zone: string, between: RuleBetween, opts: { plan?: boolean; shared?: boolean } = {}): Map<string, MirrorBody> {
+  const plan = opts.plan !== false, shared = opts.shared !== false
+  const live = rows.filter((r) => r.source === 'native' && !r.all_day && !r.deleted_at && (r.shared_id ? shared && r.share_status !== 'invited' : plan))
   const out = new Map<string, MirrorBody>()
   for (const r of expandSeries(live, window.start, window.end, zone, between)) {
     const s = Date.parse(r.starts_at)
@@ -466,7 +474,7 @@ export function mirrorBodies(rows: readonly NativeRow[], window: { start: Date; 
       start: { dateTime: new Date(s).toISOString() },
       end: { dateTime: new Date(e).toISOString() },
       transparency: r.busy === false ? 'transparent' : 'opaque',
-      visibility: 'private',
+      visibility: r.shared_id ? 'default' : 'private',
       reminders: { useDefault: false },
       extendedProperties: { private: { [MIRROR_KEY]: r.id, [MIRROR_TAG]: '1' } },
     })
@@ -498,7 +506,7 @@ export function planMirror(want: ReadonlyMap<string, MirrorBody>, listed: readon
     }
     seen.add(key)
     const same = g.summary === body.summary && sameInstant(g.start, body.start.dateTime) && sameInstant(g.end, body.end.dateTime) &&
-      (g.transparency ?? 'opaque') === body.transparency && g.visibility === body.visibility
+      (g.transparency ?? 'opaque') === body.transparency && (g.visibility ?? 'default') === body.visibility
     if (!same) plan.update.push({ id: g.id!, body })
   }
   for (const [key, body] of want) if (!seen.has(key)) plan.create.push(body)
