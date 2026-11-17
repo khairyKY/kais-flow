@@ -5,6 +5,7 @@
   "now": 1793271600,
   "zone": "Africa/Cairo",
   "name": "Reem",
+  "color": "heather",
   "level": "details",
   "now_block": { "title": "Pharmacology lecture", "start": 1793268000, "end": 1793275200, "start_hm": "13:20", "end_hm": "15:20", "color": "heather" },
   "next_blocks": [

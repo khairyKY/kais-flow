@@ -158,6 +158,13 @@ expect "her goal, and the Top 3 count (a Private pick isn't in it)" "T3GOAL 2" "
 expect "Private is a Busy block (after EVNEXT), with no title" "true 0" "$(jqe '(.next_blocks[1].busy | tostring)') $(has PVTHERAPY)"
 expect "no secret of A's, no row of B's, no ids" "0 0 0 0 0" "$(has ZZJOURNAL) $(has ZZPERSON) $(has BOWN) $(has PVPICK) $(has 'e0000000-')"
 expect "Heather, her colour" "heather" "$(jqe '.now_block.color')"
+expect "the feed names the same colour on the feed itself" "heather" "$(jqe '.color')"
+# 0105: the colour is the VIEWER's pick for her (B's own member row); the key is B's, so it reads B's pick
+sql -c "update circle_members set color = '#E58F99' where user_id = '$B_ID'" >/dev/null
+view "$K"; expect "B picks Rose for her: the feed and every block say rose" "rose rose" "$(jqe '[.color, .now_block.color] | join(" ")')"
+sql -c "update circle_members set color = '#B59CE3' where user_id = '$A_ID'" >/dev/null
+view "$K"; expect "A's own pick for B changes nothing for B's key (per viewer)" "rose" "$(jqe .color)"
+sql -c "update circle_members set color = '#8972B3' where circle_id = '$CIRCLE'" >/dev/null
 
 section "the connection is read live on every call"
 setlevel titles; view "$K"
