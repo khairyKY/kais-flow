@@ -158,6 +158,17 @@ export interface CalendarEvent {
   external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string; edit?: boolean; url?: string; link?: string; master?: string; sub_id?: string; uid?: string } | null
   /** Migration 0100 (sharing): Private - a Busy block to people you share with, at every level; a series is private as a whole. Null/absent = shown. */
   private?: boolean
+  /** Migration 0101 (shared events): both copies of one event share this id; null/absent = an ordinary event. Set by the server only (a client write can't make or move a link). */
+  shared_id?: string | null
+  /** The other person on it (their user id), and the circle it lives in. */
+  shared_with?: string | null
+  shared_circle?: string | null
+  /** My answer: 'invited' = a proposal I haven't answered (drawn dashed); 'accepted'. */
+  share_status?: 'invited' | 'accepted' | null
+  /** Their answer: 'invited' (waiting), 'accepted', 'declined' ("Reem can't go"). */
+  share_peer_status?: 'invited' | 'accepted' | 'declined' | null
+  /** Who made the last change to title / time (my id or theirs). */
+  share_edited_by?: string | null
   /** Migration 0077: remind this many minutes before each start (null/absent = none) — an offset, so it
    * follows a move and every occurrence of a series. Never on a Google event. */
   remind_min?: number | null

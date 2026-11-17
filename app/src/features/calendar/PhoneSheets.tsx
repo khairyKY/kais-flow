@@ -23,6 +23,8 @@ import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat, type BlockRef } from './api'
 import { setEventPrivate, setTaskPrivate } from '../sharing/private'
+import { removeFromMine, respondToShared, sharedNameOf } from '../sharing/sharedEvents'
+import { useSharingUi } from '../sharing/ui'
 import { useStartFocus } from '../today/startFocus'
 import { EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
@@ -89,7 +91,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'pickdate', allday: 'clock', private: 'lock',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'pickdate', allday: 'clock', private: 'lock', shared: 'people', accept: 'check', decline: 'delete', removemine: 'delete', deleteboth: 'delete',
 }
 
 /** 7d — tap a plain event (a task block opens as its task, the Task sheet): the same rows as the
@@ -155,7 +157,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
   const place = eventPlaceName(event, projects, areas)
   const menu = mode === 'menu'
-  const spec = blockMenuSpec(event, { task, placeName: place, mode })
+  const spec = blockMenuSpec(event, { task, placeName: place, mode, sharedName: event.shared_id ? sharedNameOf(event) : undefined })
   const del = spec.at(-1)!
   // A Google event (B1): its rows say when and from which calendar, Join, Open in Google Calendar, Duplicate as my own event.
   // One that's ours to change (gcal-events: `mine`) also renames, moves, resizes and deletes — in Google (the footer's Delete).
@@ -189,6 +191,11 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     details: () => onMode?.('details'),
     focus: () => leave(() => startFocus(focusTaskOf(event, tasks), event)),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
+    // A shared event (0101): answer a proposal, take it off my calendar only, or delete it for both (which asks first).
+    accept: () => leave(() => void respondToShared(event, true)),
+    decline: () => leave(() => void respondToShared(event, false)),
+    removemine: () => leave(() => removeFromMine(event)),
+    deleteboth: () => leave(() => useSharingUi.getState().openDeleteBoth(event)),
     link: (el) => {
       const r = el.getBoundingClientRect()
       setLinkAt({ x: r.left + 16, y: r.top })
@@ -204,7 +211,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     }
   }
   // cal-clicks: a repeat (or a repeating task's round) asks This / Following / All — the sheet leaves first.
-  const remove = () => leave(() => void deleteBlock(event, untitled ? 'Discarded' : 'Deleted'))
+  // A shared event's footer is Delete for both (it asks first) or, for a proposal, Decline.
+  const remove = () => (del.key === 'deleteboth' || del.key === 'decline' ? run[del.key]?.(document.body) : leave(() => void deleteBlock(event, untitled ? 'Discarded' : 'Deleted')))
   const choice = (label: string, on: boolean, act: () => void) => ({ label, selected: on, onSelect: () => { if (!on) { act(); saved() } } })
   return (
     <>

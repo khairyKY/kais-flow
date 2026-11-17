@@ -26,6 +26,9 @@ import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
 import { appZone } from '../../lib/appZone'
 import { laneSays, type LaneBlock } from '../sharing/Lane'
 import { herVars } from '../sharing/parts'
+import { sharedLookOf } from '../sharing/sharedEvents'
+import { isPending, sharedLine } from '../sharing/sharedPure'
+import '../sharing/sharing.css'
 import { useToastStore } from '../../lib/toastStore'
 
 // ── The phone time grid (Calendar Phone.dc.html 7a–7n): 64px hours, blocks as fills (MK Week Strip
@@ -602,6 +605,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const s = lifted ? lifted.draft : { start, end }
     const h = Math.max(MIN_BLOCK_PX, minToPx(s.end - s.start))
     const lk = look(ev)
+    const shared = sharedLookOf(ev.id)
     const evStart = Date.parse(ev.starts_at)
     const evEnd = Date.parse(ev.ends_at)
     const t = now.getTime()
@@ -640,10 +644,10 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     return (
       <div
         key={ev.id}
-        className={`pc-block${lifted ? ' is-lifted' : ''}${heldInto && heldInto.id === ev.id && held?.slotId !== ev.id ? ' is-drop' : ''}${past ? ' is-past' : ''}${live ? ' is-now' : ''}${ran ? ' is-ranover' : ''}${lk.goal ? ' is-goal' : ''}${geo.z && geo.z > 1 ? ' is-cascade' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
+        className={`pc-block${lifted ? ' is-lifted' : ''}${heldInto && heldInto.id === ev.id && held?.slotId !== ev.id ? ' is-drop' : ''}${past ? ' is-past' : ''}${live ? ' is-now' : ''}${ran ? ' is-ranover' : ''}${lk.goal ? ' is-goal' : ''}${geo.z && geo.z > 1 ? ' is-cascade' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}${shared ? ' is-shared' : ''}${shared && isPending(shared.state) ? ' is-shared-pending' : ''}${shared?.state === 'declined' ? ' is-shared-declined' : ''}`}
         data-id={ev.id}
         data-tour="calendar-block"
-        style={{ ...style, '--pc-lines': lk.slot ? 1 : titleLines(h) } as CSSProperties}
+        style={{ ...style, '--pc-lines': lk.slot ? 1 : titleLines(h), ...(shared ? herVars(shared.color) : null) } as CSSProperties}
         onClick={() => onTapBlock(ev)}
       >
         <div className={`pc-block-body${stacked ? ' is-stacked' : ''}`} style={{ height: stacked ? undefined : Math.min(32, h) }}>
@@ -675,6 +679,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           )}
           <span className="pc-name" dir="auto">
             {lk.goal && <span className="pc-star" aria-label="Goal of the day: ">✶ </span>}
+            {shared && <span className="sh-face" title={sharedLine(shared.state, shared.name)} aria-label={sharedLine(shared.state, shared.name)}>{shared.name.trim()[0]?.toUpperCase()}</span>}
             <EmojiText text={ev.title} />
           </span>
           {(!multi || stacked) && time && (

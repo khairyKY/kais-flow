@@ -202,6 +202,17 @@ describe('mirror — our blocks to the primary calendar as busy', () => {
     })
   })
 
+  it('a shared event (partner sharing P2): an accepted one goes out as an ORDINARY event, its own switch; an unanswered proposal never does', () => {
+    const rows = [row('plain'), row('mine', { shared_id: 's1', share_status: 'accepted' }), row('ask', { shared_id: 's2', share_status: 'invited' })]
+    const both = mirrorBodies(rows, W, 'Africa/Cairo', ruleBetween)
+    expect([...both.keys()].sort()).toEqual(['mine', 'plain'])
+    expect(both.get('mine')?.visibility).toBe('default') // ordinary, not private busy
+    expect(both.get('plain')?.visibility).toBe('private')
+    expect([...mirrorBodies(rows, W, 'Africa/Cairo', ruleBetween, { shared: false }).keys()]).toEqual(['plain']) // the shared switch off
+    expect([...mirrorBodies(rows, W, 'Africa/Cairo', ruleBetween, { plan: false }).keys()]).toEqual(['mine']) // the plan off: only what you share
+    expect(mirrorBodies(rows, W, 'Africa/Cairo', ruleBetween, { plan: false, shared: false }).size).toBe(0)
+  })
+
   it('which rows go: native, timed, live, inside the window — never a Google row (no loop)', () => {
     const w = want([
       row('keep'),

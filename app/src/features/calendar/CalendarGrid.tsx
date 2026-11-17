@@ -34,6 +34,10 @@ import { RepeatGlyph, Tick } from './checkGlyphs'
 import { EASE_OUT, markTicked, ownArrival, takeTicked } from './blockMotion'
 import { playOnce, reducedMotionNow } from '../../lib/motion'
 import { attachGlide, type Glide } from './gridGlide'
+import { sharedLookOf } from '../sharing/sharedEvents'
+import { herVars } from '../sharing/parts'
+import { isPending, sharedLine } from '../sharing/sharedPure'
+import '../sharing/sharing.css'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -1243,6 +1247,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           const c = phaseClass(phaseAt(p as BlockProps, arg.event.allDay, Date.now()))
           if (c) out.push(c)
         }
+        const sh = sharedLookOf(arg.event.id) // a shared event (0101): dashed until it is answered, the other person's face on it
+        if (sh) out.push('kf-shared', ...(isPending(sh.state) ? ['kf-shared-pending'] : []), ...(sh.state === 'declined' ? ['kf-shared-declined'] : []))
         if (L().pending.has(arg.event.id)) out.push('kf-pending')
         if (L().failed.has(arg.event.id)) out.push('kf-failed')
         return out
@@ -1386,6 +1392,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           </span>
         )
 
+        const shared = arg.isMirror ? null : sharedLookOf(arg.event.id)
         return (
           <div className={`kf-ev-row${done ? ' kf-done' : ''}`} data-tour={arg.isMirror ? undefined : 'calendar-block'}>
             {badge === '⚠' && <span className="kf-ev-badge" title="Overlaps another block">⚠</span>}
@@ -1414,6 +1421,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                 ) : (
                   <div className="fc-event-title" dir="auto" style={{ WebkitLineClamp: lines }}>
                     {p.kfGoal && <span className="kf-ev-star" aria-label="Goal of the day: ">✶ </span>}
+                    {shared && <span className="sh-face" style={herVars(shared.color)} title={sharedLine(shared.state, shared.name)} aria-label={sharedLine(shared.state, shared.name)}>{shared.name.trim()[0]?.toUpperCase()}</span>}
                     <EmojiText text={title} />
                   </div>
                 )}
@@ -1473,6 +1481,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         return arg.isMirror && !arg.event.id ? <MirrorBody time={arg.timeText} body={body} /> : body
       },
       eventDidMount: (info: EventMountArg) => {
+        const sharedHue = info.event.display === 'background' ? null : sharedLookOf(info.event.id) // a shared event's dashed edge is the colour I gave them
+        if (sharedHue) { const h = blockHue(sharedHue.color); info.el.style.setProperty('--her', h.c); info.el.style.setProperty('--her-ink', h.ink) }
         if (info.event.display === 'background') {
           // Sharing: a lane block says its title and time on hover, and on a tap; it is no block of ours (a press on it makes nothing).
           const label = (info.event.extendedProps as { kfHerLabel?: string }).kfHerLabel

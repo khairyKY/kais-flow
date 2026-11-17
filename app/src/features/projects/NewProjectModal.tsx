@@ -220,7 +220,7 @@ export function NewProjectModal({
           {/* Shared lists (0102): only a plain project can be shared, and only with someone connected. */}
           {type === 'standard' && people.map((c) => (
             <div key={c.circle_id} className="sl-switch" style={{ marginTop: 16 }}>
-              <Avatar name={c.partner_name} size={24} />
+              <Avatar name={c.partner_name} size={24} color={c.color} />
               <span className="sl-grow">Share with {c.partner_name}<small>Either of you adds, edits and ticks. Its tasks stay out of their Top 3.</small></span>
               <Toggle on={shareWith === c.circle_id} onToggle={() => setShareWith(shareWith === c.circle_id ? null : c.circle_id)} label={`Share with ${c.partner_name}`} />
             </div>

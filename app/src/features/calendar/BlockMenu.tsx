@@ -17,6 +17,8 @@ import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat } from './api'
 import { setEventPrivate, setTaskPrivate } from '../sharing/private'
+import { removeFromMine, respondToShared, sharedNameOf } from '../sharing/sharedEvents'
+import { useSharingUi } from '../sharing/ui'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
 import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isRepeatingBlock, isSynced, isUntitled, remindLabel, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
@@ -39,7 +41,7 @@ import { pickRange, rangeLabel, rangeOf, storeRange, toggleAllDay, type Range } 
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'calendar', allday: 'clock', private: 'lock',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'calendar', allday: 'clock', private: 'lock', shared: 'people', accept: 'check', decline: 'delete', removemine: 'delete', deleteboth: 'delete',
 }
 
 /** What a read-only Google event's rows can do. */
@@ -152,7 +154,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
   const place = eventPlaceName(event, projects, areas)
   const missed = !!task && task.status === 'todo' && Date.parse(event.ends_at) < Date.now()
-  const spec = blockMenuSpec(event, { task, placeName: place, missed, mode })
+  const spec = blockMenuSpec(event, { task, placeName: place, missed, mode, sharedName: event.shared_id ? sharedNameOf(event) : undefined })
   const menu = mode === 'menu'
   // A Google event (B1): its rows say when and where from, Join, Open in Google Calendar, Duplicate as my own event. One
   // that's ours to change (gcal-events: `mine`) also renames, moves, resizes and deletes — in Google.
@@ -184,7 +186,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   // one-off's Delete (p7e A4, Akiflow's Backspace) — each with Undo. A repeat asks This / All on its
   // Delete row instead, so the key leaves it alone.
   useEffect(() => {
-    const act = readOnly ? null : event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
+    const act = readOnly || event.shared_id ? null : event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
     if (!act) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Backspace' && e.key !== 'Delete') return
@@ -336,6 +338,11 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
     focus: () => { onClose(); startFocus(focusTaskOf(event, tasks), event) },
     unschedule,
     delete: del,
+    // A shared event (0101): answer a proposal, take it off my calendar only, or delete it for both (which asks first).
+    accept: () => { void respondToShared(event, true); onClose() },
+    decline: () => { void respondToShared(event, false); onClose() },
+    removemine: () => remove(() => removeFromMine(event)),
+    deleteboth: () => { onClose(); useSharingUi.getState().openDeleteBoth(event) },
   }
 
   const item = (e: BlockMenuEntry): ContextMenuItem => ({

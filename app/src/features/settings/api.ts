@@ -31,6 +31,8 @@ export interface IntegrationStatus {
   can_write?: boolean | null
   /** Google: "Show my plan in Google as busy"; null = on. */
   mirror?: boolean | null
+  /** Google: "Show events I share with someone" (partner sharing P2); null = on. */
+  share_events?: boolean | null
 }
 
 /** The GitHub row's watched repos and rules, defaults filled in. `legacy`: the rules were never
@@ -61,7 +63,7 @@ export function useIntegrations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('integrations')
-        .select('provider, updated_at, login:data->>login, status:data->>status, synced_at:data->>synced_at, repos:data->repos, rules:data->rules, calendars:data->calendars, chosen:data->chosen, can_write:data->can_write, mirror:data->mirror')
+        .select('provider, updated_at, login:data->>login, status:data->>status, synced_at:data->>synced_at, repos:data->repos, rules:data->rules, calendars:data->calendars, chosen:data->chosen, can_write:data->can_write, mirror:data->mirror, share_events:data->share_events')
       if (error) throw error
       return data as IntegrationStatus[]
     },
@@ -266,6 +268,15 @@ export async function setGoogleMirror(on: boolean): Promise<void> {
   refreshGoogle()
   if (error) throw new Error(await googleErrorMessage(error))
   if (on) await syncGoogle().catch(() => undefined)
+}
+
+/** "Show events I share with someone in Google": this side's own switch (the other person's Google is theirs). On writes them now; off, the sync removes them. */
+export async function setGoogleShareEvents(on: boolean): Promise<void> {
+  queryClient.setQueryData<IntegrationStatus[]>(['integrations'], (rows) => rows?.map((r) => (r.provider === 'google' ? { ...r, share_events: on } : r)))
+  const { error } = await supabase.functions.invoke('google-connect', { body: { action: 'share_events', on } })
+  refreshGoogle()
+  if (error) throw new Error(await googleErrorMessage(error))
+  await syncGoogle().catch(() => undefined)
 }
 
 /** Deletes our events in Google, revokes the grant, removes the row and every synced event (server-side). */
