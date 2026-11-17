@@ -30,3 +30,7 @@ New sections in `supabase/tests/sharing.sh`: *pause with no end* (infinity pause
 ## Not verified here
 - Android drawing (no device): per-swatch drawables are generated; `HerDayPlanTest` is unchanged. The android.yml build will compile it.
 - Rainmeter on a real desktop (checked in fengari only, as before).
+
+## Final results
+- Rehearsal run 44196032880: green (fresh chain + production rehearsal). `sharing.sh` and `share-widget.sh` counts are in that run's log. History: the first run found two mistakes in my new sharing.sh section, both fixed (a write to `circle_members` must use `Prefer: return=minimal`, as the app does, because the member row's other columns are deliberately unselectable; and `paused_by_me` is null once nothing is paused). A second run hung at checkout (infrastructure) and was cancelled and rerun.
+- Harness `docs/log/assets/v166-sharing/verify.mjs`: 83 passed, 0 failed (the first run's one failure, the /join signed-in page, was a cold-server miss and passed warm).
