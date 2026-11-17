@@ -1,0 +1,227 @@
+[
+  {
+    "name": "Her day card has Free together and New shared event",
+    "ok": true,
+    "detail": "y | chapters 4 to 6 | ✓ | Call grandma | Today’s tasks | Buy a birthday card for Mona | Free together | New shared event"
+  },
+  {
+    "name": "Free together: the sheet says what free means and that only gaps are compared",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "it asks the server for TODAY, from now to my midnight, about Reem only",
+    "ok": true,
+    "detail": "{\"p_partner\":\"00000000-0000-4000-8000-00000000dd22\",\"p_from\":\"2026-11-18T10:09:06.492Z\",\"p_to\":\"2026-11-18T22:00:00.000Z\"}"
+  },
+  {
+    "name": "the chips are Today / Tomorrow / This week, Today picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "windows read as ranges on my clock, grouped by day",
+    "ok": true,
+    "detail": "‹ | Kai's Flow | Personal · Cairo | Plan | › | Due Today | 2 | This Week | 2 | This Month | 2 | Upcoming | 0 | Someday | 0 | Tend | Today | Inbox | Calendar | Tasks | Projects | Cultivate | Routines | Focus | Review | Journal | Library | People | Activity | Tr"
+  },
+  {
+    "name": "it never shows her blocks or titles (the sheet holds windows only)",
+    "ok": true,
+    "detail": "Free together\nTimes you and Reem are both free: an hour or more, between 8:00 AM and 10:30 PM. Only the gaps are compare"
+  },
+  {
+    "name": "This week asks for the next seven days",
+    "ok": true,
+    "detail": "{\"p_partner\":\"00000000-0000-4000-8000-00000000dd22\",\"p_from\":\"2026-11-18T10:09:07.286Z\",\"p_to\":\"2026-11-25T10:09:07.286Z\"}"
+  },
+  {
+    "name": "Propose fills in date and time from the window (5:30 PM, two hours)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Send is off until there is a title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Send to Reem calls shared_event_create with exactly the title, the time and the circle",
+    "ok": true,
+    "detail": "{\"p_id\":\"bdd1e69e-4328-4bb1-8c29-3c691ea76772\",\"p_circle\":\"c1000000-0000-4000-8000-000000000001\",\"p_title\":\"Dinner at Zitouni\",\"p_starts_at\":\"2026-11-18T15:30:00.000Z\",\"p_ends_at\":\"2026-11-18T17:30:00.000Z\",\"p_all_day\":false}"
+  },
+  {
+    "name": "no row is written by the app itself (the server makes both copies)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and says it is waiting for an answer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "New shared event: the same sheet, blank title, the next hour",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "an end before the start is said, and Send stays off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a paused connection says so and keeps the sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a failed send says it needs a connection and keeps what was typed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "her clock is shown when it is an hour or more from mine",
+    "ok": true,
+    "detail": " this week. | Propose a time | Reem is already on it. It shows on both calendars, dashed, until they answer. | Title | Date | From | To | (Reem 10:30 AM) | Send to Reem | Not now"
+  },
+  {
+    "name": "a paused connection has no Free together button",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no window: says so plainly",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a shared event both said yes to is a shared block, not dashed",
+    "ok": true,
+    "detail": "fc-event fc-event-draggable fc-event-resizable fc-event-start fc-event-end fc-event-today fc-event-future fc-event-type-event kf-kind-event kf-tier-full fc-timegrid-event fc-v-event kf-shared"
+  },
+  {
+    "name": "waiting on Reem: dashed",
+    "ok": true,
+    "detail": "fc-event fc-event-draggable fc-event-resizable fc-event-start fc-event-end fc-event-today fc-event-future fc-event-type-event kf-kind-event kf-tier-std fc-timegrid-event fc-v-event kf-shared kf-shared-pending"
+  },
+  {
+    "name": "a proposal to me: dashed",
+    "ok": true,
+    "detail": "fc-event fc-event-draggable fc-event-resizable fc-event-start fc-event-end fc-event-today fc-event-future fc-event-type-event kf-kind-event kf-tier-std fc-timegrid-event fc-v-event kf-shared kf-shared-pending"
+  },
+  {
+    "name": "“can’t go”: shown softer",
+    "ok": true,
+    "detail": "fc-event fc-event-draggable fc-event-resizable fc-event-start fc-event-end fc-event-past fc-event-today fc-event-type-event kf-kind-event kf-tier-std fc-timegrid-event fc-v-event kf-past kf-shared kf-shared-declined"
+  },
+  {
+    "name": "Reem’s face (her initial) is on it; an ordinary event has none",
+    "ok": true,
+    "detail": "R"
+  },
+  {
+    "name": "the dashed edge is really dashed",
+    "ok": true,
+    "detail": "dashed"
+  },
+  {
+    "name": "a proposal’s menu: who invited me, Accept, Decline; no Private and no Repeat",
+    "ok": true,
+    "detail": "Reem invited you | Accept | Wed, Nov 18\nStarts\n▸ | Wed, Nov 18 · 4:00 PM\nEnds\n▸ | 3:00 – 4:00 PM\n1h\n▸ | All day | No project or area\n▸ | No reminder\n▸ | Link a task…\n▸ | More\n▸ | Decline"
+  },
+  {
+    "name": "Accept calls shared_event_respond for that event with accept: true",
+    "ok": true,
+    "detail": "{\"p_event\":\"e0000000-0000-4000-8000-000000000013\",\"p_accept\":true}"
+  },
+  {
+    "name": "…and says you are on it with Reem",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a declined event reads “Reem can’t go”",
+    "ok": true,
+    "detail": "Reem can’t go | Wed, Nov 18\nStarts\n▸ | Wed, Nov 18 · 11:30 AM\nEnds\n▸ | 10:30 – 11:30 AM\n1h\n▸ | All day | No project or area\n▸ | No reminder\n▸ | Link a task…\n▸ | More\n▸ | Remove from mine | Delete for both"
+  },
+  {
+    "name": "Decline calls it with accept: false",
+    "ok": true,
+    "detail": "{\"p_event\":\"e0000000-0000-4000-8000-000000000013\",\"p_accept\":false}"
+  },
+  {
+    "name": "a shared event’s menu: With Reem, Remove from mine, Delete for both; no Private, no Repeat, no plain Delete",
+    "ok": true,
+    "detail": "With Reem | Wed, Nov 18\nStarts\n▸ | Wed, Nov 18 · 9:00 PM\nEnds\n▸ | 7:00 – 9:00 PM\n2h\n▸ | All day | No project or area\n▸ | No reminder\n▸ | Link a task…\n▸ | More\n▸ | Remove from mine | Delete for both"
+  },
+  {
+    "name": "Delete for both asks first, and nothing was sent yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Keep it sends nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "confirming calls shared_event_delete_both for my copy, and offers Undo",
+    "ok": true,
+    "detail": "{\"p_event\":\"e0000000-0000-4000-8000-000000000011\"}"
+  },
+  {
+    "name": "Remove from mine is a plain delete of my own copy through the outbox (deleted_at), not an RPC",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000012\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Walk by the Nile\",\"starts_at\":\"2026-11-18T14:00:00.000Z\","
+  },
+  {
+    "name": "…and says Reem still has it, with an Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Undo restores my copy (deleted_at back to null) through the outbox",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000012\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Walk by the Nile\",\"starts_at\":\"2026-1"
+  },
+  {
+    "name": "phone day: a shared block carries the face; waiting and proposals are dashed",
+    "ok": true,
+    "detail": "shared 4 pending 2"
+  },
+  {
+    "name": "the event sheet: With Reem, Remove from mine, and the footer is Delete for both",
+    "ok": true,
+    "detail": "Delete for both"
+  },
+  {
+    "name": "…no Private row and no Repeat row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the footer asks first (no RPC yet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the Free together sheet lists the windows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Google settings: the shared-events switch sits beside the plan switch, on by default",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "turning it off tells google-connect, this side only",
+    "ok": true,
+    "detail": "{\"action\":\"share_events\",\"on\":false}"
+  },
+  {
+    "name": "no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -74,7 +74,7 @@ export async function setPause(c: Connection, until: string | null): Promise<voi
   void queryClient.invalidateQueries({ queryKey: [SHARED_DAY_KEY] })
 }
 
-/** Disconnect: the circle and everything in it go, for both of us, at once. Nothing is kept. */
+/** Disconnect: the circle and everything in it go, for both of us, at once. Shared events (0101) stay on each calendar as plain events of their own person. */
 export async function leaveCircle(c: Connection): Promise<void> {
   const { error } = await supabase.from('circles').delete().eq('id', c.circle_id)
   if (error) throw error

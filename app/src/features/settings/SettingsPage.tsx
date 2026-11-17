@@ -25,7 +25,7 @@ import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readUndoToasts, writeUndoToasts, type UndoToasts } from '../../lib/undo'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
-import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
+import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, setGoogleShareEvents, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
 import { chooseClassroomCourses, CLASSROOM_RETURN, classroomState, classroomSyncLine, disconnectClassroom, refreshClassroomCourses, startClassroom, syncClassroom, useClassroom, type ClassroomStatus } from './classroomApi'
 import { addIcs, previewIcs, refreshIcs, removeIcs, subscriptionLine, updateIcs, useSubscriptions, type IcsPreview, type Subscription } from './icsApi'
 import { SwatchTray } from '../calendar/formFields'
@@ -2430,9 +2430,14 @@ function GoogleCalendars({ google, onReconnect }: { google: IntegrationStatus; o
       ))}
       {!google.calendars?.length && <Row label="No calendars yet" help="Look again once the account has one" />}
       {google.can_write ? (
-        <Row label="Show my plan in Google as busy" help="Your blocks and events, as private busy time in your main Google calendar">
-          <Toggle on={google.mirror !== false} label="Show my plan in Google as busy" onToggle={() => { setErr(null); setGoogleMirror(google.mirror === false).catch((e: Error) => setErr(e.message)) }} />
-        </Row>
+        <>
+          <Row label="Show my plan in Google as busy" help="Your blocks and events, as private busy time in your main Google calendar">
+            <Toggle on={google.mirror !== false} label="Show my plan in Google as busy" onToggle={() => { setErr(null); setGoogleMirror(google.mirror === false).catch((e: Error) => setErr(e.message)) }} />
+          </Row>
+          <Row label="Show events I share with someone in Google" help="Events you and a person you share with are both on, as ordinary events in your main Google calendar. Their Google is their own switch">
+            <Toggle on={google.share_events !== false} label="Show events I share with someone in Google" onToggle={() => { setErr(null); setGoogleShareEvents(google.share_events === false).catch((e: Error) => setErr(e.message)) }} />
+          </Row>
+        </>
       ) : (
         <Row label="Allow Kai’s Flow to show your blocks in Google" help="Reconnect once and allow it — it also lets you edit your own Google events here. Your calendars keep syncing until then">
           <Button type="button" variant="secondary" onClick={onReconnect}>Reconnect</Button>

@@ -3,6 +3,7 @@
 // `shared_day` returns: the server already left out everything the level does not show.
 import { useMemo, useState } from 'react'
 import { Icon } from '../../components/Icon'
+import { Button } from '../../components/kit'
 import { useAppZone } from '../../lib/appZone'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { useSharedDay, useConnections, type SharedTask } from './api'
@@ -113,6 +114,11 @@ export function HerDayCard({ c }: { c: Connection }) {
             <Tasks title="Today’s tasks" rows={data.tasks ?? []} />
           </>
         )}
+        {/* Free together: the server compares both calendars and answers with windows; Propose makes a shared event. */}
+        <div className="sh-sec sh-chips">
+          <Button variant="secondary" icon={<Icon name="clock" size={16} />} onClick={() => ui.openFree(c.circle_id)}>Free together</Button>
+          <Button variant="secondary" icon={<Icon name="plus" size={16} />} onClick={() => ui.openPropose({ circleId: c.circle_id, partnerZone: data.zone })}>New shared event</Button>
+        </div>
       </div>
     </section>
   )

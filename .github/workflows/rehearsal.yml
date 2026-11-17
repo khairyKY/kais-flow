@@ -139,6 +139,9 @@ jobs:
       - name: share-status.sh (partner sharing P2 - status from the Now card, and notices - opt-in, masking per level, Private never notifies, quiet hours hold, 5-minute grouping, the 24-hour cap, a third user gets nothing)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/share-status.sh 2>&1 | tee "$RUNNER_TEMP/suite-share-status.log"
+      - name: sharing-events.sh (partner sharing P2 - Free together windows, shared events - propose, answer, no answer, edit, delete, leave, a third user, a pause)
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: bash supabase/tests/sharing-events.sh 2>&1 | tee "$RUNNER_TEMP/suite-sharing-events.log"
       - name: classroom.sh (Google Classroom deadlines — consent, sync plan, hand-in, Trash, disconnect; Google mocked)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/classroom.sh 2>&1 | tee "$RUNNER_TEMP/suite-classroom.log"
@@ -156,7 +159,7 @@ jobs:
         if: always()
         run: |
           echo "### Suites" >> "$GITHUB_STEP_SUMMARY"
-          for s in gcal-edit ics-unit fix0-auth sec2 notify-prune mcp-week mcp-full widget calendar-feed sharing share-widget sharing-lists share-status classroom ics fix5-search retainer-reload; do
+          for s in gcal-edit ics-unit fix0-auth sec2 notify-prune mcp-week mcp-full widget calendar-feed sharing share-widget sharing-lists share-status sharing-events classroom ics fix5-search retainer-reload; do
             log="$RUNNER_TEMP/suite-$s.log"
             if [ ! -f "$log" ]; then echo "- $s: did not run"; continue; fi
             result=$(grep -oE '^[0-9]+ passed.*|^(ok|FAILED) [|] [0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)

@@ -200,3 +200,41 @@ describe('F7 multi-day rows', () => {
     expect(blockMenuSpec(block({ task_id: 't1' }), { task: { title: 'x', status: 'todo' } }).map((r) => r.key)).toEqual(['date', 'time', 'project', 'private', 'complete', 'open', 'unschedule', 'delete'])
   })
 })
+
+describe('a shared event (partner sharing P2, 0101)', () => {
+  beforeEach(() => setAppZone('Africa/Cairo'))
+  const shared = (over: Partial<CalendarEvent> = {}) => block({ type: 'event', shared_id: 's1', shared_with: 'u2', share_status: 'accepted', share_peer_status: 'accepted', ...over })
+
+  it('says where it stands; no Private, no Repeat; Remove from mine, then Delete for both last (the phone footer shows the last row)', () => {
+    const spec = blockMenuSpec(shared(), { sharedName: 'Reem' })
+    expect(spec[0]).toMatchObject({ key: 'shared', label: 'With Reem' })
+    const k = spec.map((r) => r.key)
+    expect(k).not.toContain('private')
+    expect(k).not.toContain('repeat')
+    expect(k.slice(-2)).toEqual(['removemine', 'deleteboth'])
+    expect(spec.at(-1)).toMatchObject({ key: 'deleteboth', label: 'Delete for both', destructive: true })
+    expect(k).not.toContain('delete')
+  })
+  it('a proposal I have not answered: Accept at the top, Decline last (no Delete for both yet)', () => {
+    const spec = blockMenuSpec(shared({ share_status: 'invited' }), { sharedName: 'Reem' })
+    expect(spec.slice(0, 2).map((r) => r.key)).toEqual(['shared', 'accept'])
+    expect(spec[0].label).toBe('Reem invited you')
+    expect(spec.at(-1)).toMatchObject({ key: 'decline', label: 'Decline', destructive: true })
+    expect(spec.map((r) => r.key)).not.toContain('deleteboth')
+  })
+  it('waiting and declined read in her words', () => {
+    expect(blockMenuSpec(shared({ share_peer_status: 'invited' }), { sharedName: 'Reem' })[0].label).toBe('Waiting for Reem to answer')
+    expect(blockMenuSpec(shared({ share_peer_status: 'declined' }), { sharedName: 'Reem' })[0].label).toBe('Reem can’t go')
+  })
+  it('menu B (right-click): Accept for a proposal, and the same two delete rows', () => {
+    const k = blockMenuSpec(shared(), { mode: 'menu', sharedName: 'Reem' }).map((r) => r.key)
+    expect(k.slice(-2)).toEqual(['removemine', 'deleteboth'])
+    expect(blockMenuSpec(shared({ share_status: 'invited' }), { mode: 'menu' }).map((r) => r.key)).toContain('accept')
+  })
+  it('an ordinary event is as it was (Private, Repeat, Delete)', () => {
+    const k = keys(block({ type: 'event' }))
+    expect(k).toContain('private')
+    expect(k).toContain('repeat')
+    expect(k.at(-1)).toBe('delete')
+  })
+})

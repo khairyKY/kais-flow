@@ -184,7 +184,7 @@ async function syncUser(db: SupabaseClient, { user_id: userId, data, updated_at 
     const counts: Counts = { calendars: fetched.size, fetched: [...fetched.values()].reduce((n, r) => n + r.length, 0), new: 0, updated: 0, removed: 0, out: null }
     Object.assign(counts, await applyPlan(db, userId, plan))
 
-    if (canWrite) counts.out = await writeOut(db, userId, access_token, window, zone, data.mirror !== false)
+    if (canWrite) counts.out = await writeOut(db, userId, access_token, window, zone, data.mirror !== false, data.share_events !== false)
 
     const rolesChanged = known.some((c, i) => c.role !== data.calendars?.[i]?.role)
     must(await saveData({ status: 'ok', synced_at: startedAt, can_write: canWrite, ...(rolesChanged ? { calendars: known } : null) }))
@@ -197,19 +197,19 @@ async function syncUser(db: SupabaseClient, { user_id: userId, data, updated_at 
 
 /** Our plan → the primary calendar (or, switched off, ours there deleted). Never throws: the read sync
  * already landed, and the next run retries whatever this one couldn't do. */
-async function writeOut(db: SupabaseClient, userId: string, token: string, window: { start: Date; end: Date }, zone: string, on: boolean): Promise<Out> {
+async function writeOut(db: SupabaseClient, userId: string, token: string, window: { start: Date; end: Date }, zone: string, on: boolean, shared: boolean): Promise<Out> {
   try {
     const rows: NativeRow[] = []
     // source 'native' only: a Google row never goes back out (mirrorBodies checks it again).
-    for (let from = 0; on; from += 1000) {
-      const page = must(await db.from('calendar_events').select('id, title, starts_at, ends_at, all_day, source, busy, deleted_at, recurrence_rule, recurrence_exdates')
+    for (let from = 0; on || shared; from += 1000) {
+      const page = must(await db.from('calendar_events').select('id, title, starts_at, ends_at, all_day, source, busy, deleted_at, recurrence_rule, recurrence_exdates, shared_id, share_status')
         .eq('user_id', userId).eq('source', 'native').eq('all_day', false).is('deleted_at', null)
         .lt('starts_at', window.end.toISOString()).or(`ends_at.gt.${window.start.toISOString()},recurrence_rule.not.is.null`)
         .order('id').range(from, from + 999)) as NativeRow[]
       rows.push(...page)
       if (page.length < 1000) break
     }
-    const want = mirrorBodies(rows, window, zone, ruleBetween)
+    const want = mirrorBodies(rows, window, zone, ruleBetween, { plan: on, shared })
     const r = await writeMirror(planMirror(want, await listMirrored(token)), token, MAX_MIRROR_WRITES)
     if (r.failed) console.error('google-sync: some writes to Google failed', r.failed)
     return { blocks: want.size, ...r }
