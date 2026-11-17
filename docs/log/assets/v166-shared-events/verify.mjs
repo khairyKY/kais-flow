@@ -58,7 +58,7 @@ const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onb
 
 const connection = (o = {}) => ({
   circle_id: CIRCLE, relation: 'partner', partner_id: PARTNER, partner_name: 'Reem', my_level: 'details', their_level: 'details', level: 'details', my_grant_id: 'd0000000-0000-4000-8000-000000000001',
-  show_lane: true, since: '2026-11-10T08:00:00Z', paused_until: null, paused_by_me: false, ...o,
+  show_lane: true, show_day: true, color: '#8972B3', since: '2026-11-10T08:00:00Z', paused_until: null, paused_by_me: false, ...o,
 })
 /** What the server would answer for Reem's day at a level: the masking is the server's, here only its shape. */
 function sharedDay(level) {
