@@ -508,6 +508,11 @@ verify_jwt = false
 # It asks the database only for share_day_data's masked answer for the link's owner and level.
 verify_jwt = false
 
+[functions.share-widget]
+# Her-day widget key (v1.6.6, migration 0104 share_widget_links): authenticated by the key's token in the URL, not a JWT — see the function.
+# It asks the database only for share_widget_read's masked answer for the person the key names.
+verify_jwt = false
+
 [functions.classroom-connect]
 # Google Classroom: Google's OAuth redirect back is a plain browser GET with no JWT (as google-connect).
 # The function checks every POST itself (requireUser) and the callback's HMAC-signed `state`.
