@@ -71,3 +71,46 @@ create or replace function share_connections() returns jsonb language sql stable
 $$;
 revoke all on function share_connections() from public, anon;
 grant execute on function share_connections() to authenticated;
+
+-- The her-day widgets (0104) ask through share_widget_read, held by the VIEWER's key: add the colour THE VIEWER gave that person
+-- (their own member row), so the Android snapshot and the Rainmeter feed draw it too. As 0104 otherwise, line for line.
+create or replace function share_widget_read(p_hash text) returns jsonb language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  l share_widget_links; v_circle uuid; v_paused timestamptz; v_level text; v_zone text; v_vzone text; v_today date; v_from timestamptz; v_to timestamptz; v_color text;
+begin
+  if p_hash is null or p_hash !~ '^[0-9a-f]{64}$' then return jsonb_build_object('status', 'unauthorized'); end if;
+  update share_widget_links set calls = case when calls_hour = date_trunc('hour', now()) then calls + 1 else 1 end,
+    calls_hour = date_trunc('hour', now()), last_used_at = now()
+  where token_hash = p_hash
+  returning * into l;
+  if l.id is null then return jsonb_build_object('status', 'unauthorized'); end if;
+  if l.calls > 60 then return jsonb_build_object('status', 'rate_limited'); end if;  -- the count still commits
+  if l.revoked_at is not null then return jsonb_build_object('status', 'revoked'); end if;
+
+  select c.id, c.paused_until, share_lower(g1.level, g2.level) into v_circle, v_paused, v_level
+  from circles c
+  join share_grants g1 on g1.circle_id = c.id and g1.owner_id = l.owner_id and g1.viewer_id = l.user_id
+  join share_grants g2 on g2.circle_id = c.id and g2.owner_id = l.user_id and g2.viewer_id = l.owner_id
+  limit 1;
+  if v_circle is null then
+    update share_widget_links set revoked_at = now() where id = l.id;
+    return jsonb_build_object('status', 'gone');
+  end if;
+  select m.color into v_color from circle_members m where m.circle_id = v_circle and m.user_id = l.user_id;
+
+  select s.timezone into v_zone from app_settings s where s.user_id = l.owner_id;
+  if v_zone is null or not exists (select 1 from pg_timezone_names n where n.name = v_zone) then v_zone := 'Africa/Cairo'; end if;
+  select s.timezone into v_vzone from app_settings s where s.user_id = l.user_id;
+  if v_vzone is null or not exists (select 1 from pg_timezone_names n where n.name = v_vzone) then v_vzone := 'Africa/Cairo'; end if;
+
+  if v_paused is not null and v_paused > now() then
+    return jsonb_build_object('status', 'paused', 'name', share_name(l.owner_id), 'paused_until', v_paused, 'zone', v_vzone, 'color', v_color);
+  end if;
+
+  v_today := (now() at time zone v_zone)::date;
+  v_from := v_today::timestamp at time zone v_zone;
+  v_to := (v_today + 2)::timestamp at time zone v_zone;
+  return jsonb_build_object('status', 'ok', 'name', share_name(l.owner_id), 'level', v_level, 'zone', v_vzone, 'owner_zone', v_zone, 'color', v_color,
+    'from', v_from, 'to', v_to, 'data', share_day_data(l.owner_id, v_level, v_from, v_to));
+end $$;
+revoke all on function share_widget_read(text) from public, anon, authenticated;

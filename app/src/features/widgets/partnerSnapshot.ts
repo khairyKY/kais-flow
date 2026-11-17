@@ -1,6 +1,7 @@
 import { occurrences } from '../sharing/sharedBlocks'
 import type { SharedDay } from '../sharing/api'
-import type { Connection, Level } from '../sharing/model'
+import { BLOCK_SWATCHES } from '../calendar/blockHue'
+import { HER_COLOR, type Connection, type Level } from '../sharing/model'
 
 // The Her day widget's slice of the snapshot (Partner sharing P2, flow 6; widgets/HerDay.java reads these exact keys): one
 // connected person's day as the server's masked answer (`shared_day`) lets this phone see it, at the LOWER of your two levels.
@@ -20,8 +21,15 @@ export interface WidgetPartnerBlock {
   end: number
 }
 
+/** The colour you gave her as the swatch's name ('rose', 'heather'): what the phone widget draws her initial and blocks in (the
+ * widget has a drawable per swatch, Render.SWATCHES). Heather until one is picked, and for anything that is not one of the 16. */
+export const swatchOf = (hex: string | null | undefined): string =>
+  (BLOCK_SWATCHES.find((s) => s.value === (hex ?? '').toUpperCase()) ?? BLOCK_SWATCHES.find((s) => s.value === HER_COLOR)!).name.toLowerCase()
+
 export interface WidgetPartner {
   name: string
+  /** Her colour, as a palette C swatch name. */
+  color: string
   level: Level
   /** When this was last read from the server (ms): the widget's freshness. */
   at: number
@@ -35,9 +43,9 @@ export interface WidgetPartner {
   top: { done: number; total: number } | null
 }
 
-/** Whose day the widget shows: a Partner first, else the first person whose day you show. */
+/** Whose day the widget shows: a Partner first, else the first person whose day you show on Today. */
 export function pickPartner(people: readonly Connection[]): Connection | null {
-  return people.find((c) => c.relation === 'partner') ?? people.find((c) => c.show_lane) ?? null
+  return people.find((c) => c.relation === 'partner') ?? people.find((c) => c.show_day) ?? null
 }
 
 export interface PartnerInput {
@@ -53,7 +61,7 @@ export interface PartnerInput {
 export function buildPartner(i: PartnerInput): WidgetPartner | null {
   const c = i.conn
   if (!c) return null
-  const base = { name: c.partner_name, level: c.level, at: i.readAt, blocks: [], goal: null, top: null }
+  const base = { name: c.partner_name, color: swatchOf(c.color), level: c.level, at: i.readAt, blocks: [], goal: null, top: null }
   if (c.paused_until) {
     const until = c.paused_until === 'infinity' ? 0 : Date.parse(c.paused_until)
     return { ...base, paused: true, pausedUntil: Number.isFinite(until) ? until : 0 }

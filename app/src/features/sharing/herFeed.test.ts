@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { herFeed, type ReadOk } from '../../../../supabase/functions/share-widget/feed.ts'
+import { BLOCK_SWATCHES } from '../calendar/blockHue'
+import { HER_COLOR } from './model'
+import { SWATCH_NAMES, herFeed, swatchName, type ReadOk } from '../../../../supabase/functions/share-widget/feed.ts'
 import { ruleBetween } from '../calendar/series'
 
 // The Rainmeter skin's feed (supabase/functions/share-widget): the server's masked day, now and next picked, nothing added.
@@ -39,6 +41,19 @@ describe('share-widget feed', () => {
     const f = herFeed(read('titles', { blocks: [b('r', -24 * 60 + 60, -24 * 60 + 120, 'Gym', { recurrence_rule: 'FREQ=DAILY' }), b('d', 0, 1440, 'Holiday', { all_day: true })] }), NOW, ruleBetween)
     expect(f.now_block).toBeNull()
     expect(f.next_blocks.map((x) => x.title)).toEqual(['Gym', 'Gym'])
+  })
+  it('names the colour the viewer gave her, on the feed and on every block; Heather until one is picked', () => {
+    const blocks = [b('a', -30, 30, 'Lecture'), b('b', 90, 150, 'Study')]
+    const f = herFeed({ ...read('titles', { blocks }), color: '#E58F99' }, NOW, ruleBetween)
+    expect([f.color, f.now_block?.color, f.next_blocks[0].color]).toEqual(['rose', 'rose', 'rose'])
+    const d = herFeed(read('titles', { blocks }), NOW, ruleBetween)
+    expect([d.color, d.now_block?.color]).toEqual(['heather', 'heather'])
+    expect(swatchName('#e58f99')).toBe('rose')
+    expect(swatchName('#123456')).toBe('heather') // never a colour the skin has no table row for
+  })
+  it('the 16 names are palette C’s, and Heather is the default', () => {
+    expect(SWATCH_NAMES).toEqual(Object.fromEntries(BLOCK_SWATCHES.map((s) => [s.value, s.name.toLowerCase()])))
+    expect(swatchName(HER_COLOR)).toBe('heather')
   })
   it('never carries an id', () => {
     expect(JSON.stringify(herFeed(read('details', { blocks: [b('secret-id', -30, 30, 'Lecture')], top3: [{ id: 'secret-task', title: 'G', goal: true }] }), NOW, ruleBetween))).not.toContain('secret')
