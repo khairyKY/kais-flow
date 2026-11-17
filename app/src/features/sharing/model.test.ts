@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { CODE_ALPHABET, cleanCode, codeIn, defaultLevel, formatCode, inviteMessage, isCode, laneDefault, limitedBy, lower, notices, pauseLine, pauseUntil, ruleNow, seenOf, webInvite, type Connection } from './model'
+import { BLOCK_SWATCHES } from '../calendar/blockHue'
+import { CODE_ALPHABET, cleanCode, codeIn, defaultLevel, formatCode, inviteMessage, isCode, laneDefault, dayDefault, HER_COLOR, limitedBy, lower, notices, pauseLine, pausedSaid, pauseUntil, PAUSE_KINDS, PAUSE_NAME, ruleNow, seenOf, webInvite, type Connection } from './model'
 
 const conn = (over: Partial<Connection> = {}): Connection => ({
   circle_id: 'c1', relation: 'partner', partner_id: 'u2', partner_name: 'Reem', my_level: 'details', their_level: 'details', level: 'details',
-  my_grant_id: 'g1', show_lane: true, since: '2026-11-01T00:00:00Z', paused_until: null, paused_by_me: false, ...over,
+  my_grant_id: 'g1', show_lane: true, show_day: true, color: HER_COLOR, since: '2026-11-01T00:00:00Z', paused_until: null, paused_by_me: false, ...over,
 })
 
 describe('levels and defaults', () => {
-  it('Partner starts at Details, Family at Titles, Friend at Busy; the lane is on for a Partner only', () => {
+  it('Partner starts at Details, Family at Titles, Friend at Busy; both switches (lane, Today card) are on for a Partner only', () => {
     expect([defaultLevel('partner'), defaultLevel('family'), defaultLevel('friend')]).toEqual(['details', 'titles', 'busy'])
     expect([laneDefault('partner'), laneDefault('family'), laneDefault('friend')]).toEqual([true, false, false])
+    expect([dayDefault('partner'), dayDefault('family'), dayDefault('friend')]).toEqual([true, false, false])
+  })
+  it('her colour starts as Heather, one of palette C’s 16', () => {
+    expect(BLOCK_SWATCHES).toHaveLength(16)
+    expect(BLOCK_SWATCHES.find((s) => s.name === 'Heather')?.value).toBe(HER_COLOR)
   })
   it('you see what you show: the lower of the two', () => {
     expect(lower('details', 'busy')).toBe('busy')
@@ -50,11 +56,16 @@ describe('the code', () => {
 
 describe('pause', () => {
   const now = new Date('2026-11-17T10:00:00Z') // 12:00 in Cairo
-  it('an hour, tomorrow at 8:00 on the pauser’s clock, or until turned back on', () => {
-    expect(pauseUntil('hour', now, 'Africa/Cairo')).toBe('2026-11-17T11:00:00.000Z')
-    expect(pauseUntil('today', now, 'Africa/Cairo')).toBe('2026-11-18T06:00:00.000Z') // 08:00 Cairo (UTC+2 in November)
-    expect(pauseUntil('today', now, 'America/New_York')).toBe('2026-11-18T13:00:00.000Z') // 08:00 New York (UTC-5)
-    expect(pauseUntil('forever', now, 'Africa/Cairo')).toBe('infinity')
+  it('has no automatic end by default: until turned back on first, an hour as the timed choice, nothing that ends on its own tomorrow', () => {
+    expect(PAUSE_KINDS).toEqual(['forever', 'hour'])
+    expect(PAUSE_KINDS[0]).toBe('forever')
+    expect(pauseUntil('forever', now)).toBe('infinity')
+    expect(pauseUntil('hour', now)).toBe('2026-11-17T11:00:00.000Z')
+    expect(Object.values(PAUSE_NAME).join(' ')).not.toMatch(/today/i)
+  })
+  it('the toast says no end plainly, and a timed pause when it ends', () => {
+    expect(pausedSaid('infinity', now, 'Africa/Cairo')).toBe('Paused until you turn it back on.')
+    expect(pausedSaid('2026-11-17T11:00:00.000Z', now, 'Africa/Cairo')).toBe('Paused. Back at 1:00 PM.')
   })
   it('says when it ends in plain words', () => {
     expect(pauseLine('2026-11-18T06:00:00.000Z', now, 'Africa/Cairo')).toBe('Back tomorrow at 8:00 AM')

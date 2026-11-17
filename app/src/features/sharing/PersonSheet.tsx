@@ -1,15 +1,17 @@
 // One person's page (flows 3, 6, 7): the relationship, what they see of you (the level list with previews), the
-// "you see what you show" rule at work, Pause, "Show on my calendar", and Disconnect behind a confirm sheet.
+// "you see what you show" rule at work, Pause (until you turn it back on, or an hour), her colour, the two switches (her lane on
+// my calendar, her day on Today) and Disconnect behind a confirm sheet.
 import { useState } from 'react'
 import { BottomSheet } from '../../components/BottomSheet'
 import { Icon } from '../../components/Icon'
 import { Button, Segmented, Toggle } from '../../components/kit'
 import { useAppZone } from '../../lib/appZone'
+import { PlaceSwatches } from '../calendar/formFields'
 import { useToastStore } from '../../lib/toastStore'
 import { useAuth } from '../auth/AuthProvider'
-import { leaveCircle, setLane, setMyLevel, setPause, setRelation, useConnections } from './api'
+import { leaveCircle, setColor, setDay, setLane, setMyLevel, setPause, setRelation, useConnections } from './api'
 import { Avatar, LevelList, NeverShared } from './parts'
-import { LEVEL_NAME, PAUSE_NAME, RELATIONS, RELATION_NAME, limitedBy, pauseLine, pauseUntil, ruleNow, type Connection, type PauseKind, type Relation } from './model'
+import { LEVEL_NAME, PAUSE_KINDS, PAUSE_NAME, RELATIONS, RELATION_NAME, limitedBy, pauseLine, pausedSaid, pauseUntil, ruleNow, type Connection, type PauseKind, type Relation } from './model'
 
 function saveFailed(msg: string) {
   return (e: unknown) => {
@@ -44,7 +46,7 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
       {() => (
         <div className="sh-sheet">
           <div className="sh-head">
-            <Avatar name={c.partner_name} size={56} />
+            <Avatar name={c.partner_name} size={56} color={c.color} />
             <div>
               <div className="sh-name">{c.partner_name}</div>
               <div className="sh-since">{RELATION_NAME[c.relation]} · connected {new Date(c.since).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: zone })}</div>
@@ -79,12 +81,22 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
             <div className="sh-row is-col">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Icon name="stop" size={20} /><span>Pause sharing</span></div>
               <PauseChips c={c} />
-              <div className="sh-cap" style={{ margin: 0 }}>While paused, neither of you sees the other.</div>
+              <div className="sh-cap" style={{ margin: 0 }}>While paused, neither of you sees the other. It stays paused until you turn it back on.</div>
             </div>
             <div className="sh-row">
               <Icon name="calendar" size={20} />
-              <span className="sh-grow">Show on my calendar</span>
-              <Toggle on={c.show_lane} label={`Show ${c.partner_name} on my calendar`} onToggle={() => void setLane(c, !c.show_lane).catch(failed)} />
+              <span className="sh-grow">Show {c.partner_name}’s lane on my calendar</span>
+              <Toggle on={c.show_lane} label={`Show ${c.partner_name}’s lane on my calendar`} onToggle={() => void setLane(c, !c.show_lane).catch(failed)} />
+            </div>
+            <div className="sh-row">
+              <Icon name="today" size={20} />
+              <span className="sh-grow">Show {c.partner_name}’s day on Today</span>
+              <Toggle on={c.show_day} label={`Show ${c.partner_name}’s day on Today`} onToggle={() => void setDay(c, !c.show_day).catch(failed)} />
+            </div>
+            <div className="sh-row is-col">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar name={c.partner_name} size={20} color={c.color} /><span>{c.partner_name}’s colour</span></div>
+              <PlaceSwatches value={c.color} onPick={(hex) => void setColor(c, hex).catch(failed)} size={24} label={`${c.partner_name}’s colour`} />
+              <div className="sh-cap" style={{ margin: 0 }}>For their lane and card. Only you see it.</div>
             </div>
           </div>
           <div className="sh-box"><NeverShared /></div>
@@ -96,20 +108,21 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
   )
 }
 
-/** The three pause chips: an hour, today, until turned back on. Used here and from the lane's menu and her card. */
+/** The pause choices: until you turn it back on (the default, first), or an hour. Used here and on her card; the lane's menu has the same two. */
 export function PauseChips({ c, onDone }: { c: Connection; onDone?: () => void }) {
   const zone = useAppZone()
   const failed = saveFailed('That didn’t save. Check the connection and try again.')
   return (
     <div className="sh-chips" role="group" aria-label="Pause sharing">
-      {(['hour', 'today', 'forever'] as const).map((k: PauseKind) => (
+      {PAUSE_KINDS.map((k: PauseKind) => (
         <Button
           key={k}
           variant="secondary"
           selected={!!c.paused_until && ((k === 'forever') === (c.paused_until === 'infinity'))}
           onClick={() => {
-            void setPause(c, pauseUntil(k, new Date(), zone)).then(() => {
-              useToastStore.getState().push({ message: `Paused. ${pauseLine(pauseUntil(k, new Date(), zone), new Date(), zone)}.` })
+            const until = pauseUntil(k, new Date())
+            void setPause(c, until).then(() => {
+              useToastStore.getState().push({ message: pausedSaid(until, new Date(), zone) })
               onDone?.()
             }).catch(failed)
           }}

@@ -535,7 +535,7 @@ function DesktopCalendar() {
   // Sharing: the thin Heather lane of the people whose day is on — their blocks over the days on screen, as the server masks them.
   const laneRange = useMemo(() => (rangeInfo ? { start: new Date(rangeInfo.start.getTime() - DAY_MS), end: new Date(rangeInfo.end.getTime() + DAY_MS) } : undefined), [rangeInfo])
   const lanes = useLanes(laneRange, 'desktop')
-  const herLane = useMemo(() => lanes.filter((l) => !l.all_day).map((l) => ({ id: l.id, start: l.starts_at, end: l.ends_at, busy: l.title == null, lane: l.lane, label: laneSays(l, appZone()) })), [lanes])
+  const herLane = useMemo(() => lanes.filter((l) => !l.all_day).map((l) => ({ id: l.id, start: l.starts_at, end: l.ends_at, busy: l.title == null, lane: l.lane, color: l.color, label: laneSays(l, appZone()) })), [lanes])
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
   const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
   useEffect(() => onPrefApplied(VIEW_OPTIONS_KEY, () => setViewOpts(readViewOptions())), []) // changed on another device

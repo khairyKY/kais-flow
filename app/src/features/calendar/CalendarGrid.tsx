@@ -157,9 +157,9 @@ interface CalendarGridProps {
    * empty all-day band, and its free stretches drawn as dashed "2h free" boxes. */
   strip?: boolean
   freeGaps?: { start: string; end: string; label: string }[]
-  /** Sharing (v1.6.6): the thin Heather lane of the people whose day is on — timed blocks, drawn behind yours as FullCalendar background
+  /** Sharing (v1.6.6): the thin lane (the colour you gave each person, Heather until you pick) of the people whose lane is on — timed blocks, drawn behind yours as FullCalendar background
    * events (features/sharing/Lane). A block with no title is Busy (hatched). */
-  herLane?: readonly { id: string; start: string; end: string; busy: boolean; label: string; lane: number }[]
+  herLane?: readonly { id: string; start: string; end: string; busy: boolean; label: string; lane: number; color: string }[]
   /** cal-wave (Akiflow's "Dynamic"): the first and last hour drawn ("HH:MM:SS"), the rows stretched to
    * the grid's height. Absent = the whole day at the density's row height. */
   slotMinTime?: string
@@ -1021,7 +1021,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       (freeGaps ?? []).map((g, i) => ({ id: `kf-free-${i}`, title: g.label, start: g.start, end: g.end, display: 'background', classNames: ['kf-free'] })),
     ).concat(
       // Sharing: her blocks as a thin lane behind (a day's own blocks are inset from it, CSS .kf-has-her).
-      (herLane ?? []).map((l) => ({ id: `kf-her-${l.id}`, title: l.label, start: l.start, end: l.end, display: 'background', classNames: ['kf-her', ...(l.busy ? ['is-busy'] : [])], extendedProps: { kfHerLabel: l.label, kfHerLane: l.lane } })),
+      (herLane ?? []).map((l) => ({ id: `kf-her-${l.id}`, title: l.label, start: l.start, end: l.end, display: 'background', classNames: ['kf-her', ...(l.busy ? ['is-busy'] : [])], extendedProps: { kfHerLabel: l.label, kfHerLane: l.lane, kfHerColor: l.color } })),
     )
     fcShared.current = shareEvents(fcShared.current, next)
     return fcShared.current.arr
@@ -1479,6 +1479,9 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           if (label) {
             info.el.title = label
             info.el.style.setProperty('--kf-lane', String((info.event.extendedProps as { kfHerLane?: number }).kfHerLane ?? 0))
+            const her = blockHue((info.event.extendedProps as { kfHerColor?: string }).kfHerColor ?? '#8972B3') // ds-ok: Heather, the colour until one is picked
+            info.el.style.setProperty('--her', her.c)
+            info.el.style.setProperty('--her-ink', her.ink)
             info.el.addEventListener('pointerdown', (e) => e.stopPropagation())
             info.el.addEventListener('click', (e) => { e.stopPropagation(); useToastStore.getState().push({ message: label }) })
           }

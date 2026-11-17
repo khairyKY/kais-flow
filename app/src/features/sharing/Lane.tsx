@@ -1,6 +1,7 @@
-// Her calendar on yours (flow 5, the picked look): a thin Heather lane beside your blocks - dashed, hatched where it is only Busy -
+// Her calendar on yours (flow 5, the picked look): a thin lane in the colour you gave her (Heather until you pick) beside your blocks - dashed, hatched where it is only Busy -
 // on the desktop's week and day and on the phone. An avatar chip in the calendar's header turns it on and off; its menu pauses
-// sharing or opens the person's page. On by default for a Partner, off for Family and Friend.
+// sharing or opens the person's page. The chip is your "Show her lane on my calendar" switch (on by default for a Partner, off for Family and
+// Friend); her card on Today has its own.
 import { useMemo, useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { ContextMenu } from '../../components/ContextMenu'
@@ -8,11 +9,11 @@ import { Icon } from '../../components/Icon'
 import { useAppZone } from '../../lib/appZone'
 import { supabase } from '../../lib/supabase'
 import { useToastStore } from '../../lib/toastStore'
-import { SHARED_DAY_KEY, setLane, useConnections, type SharedDay } from './api'
+import { SHARED_DAY_KEY, setLane, setPause, useConnections, type SharedDay } from './api'
 import { Avatar } from './parts'
 import { occurrences } from './sharedBlocks'
 import { useSharingUi } from './ui'
-import { pauseLine, type Connection } from './model'
+import { PAUSE_NAME, pauseLine, pausedSaid, pauseUntil, type Connection } from './model'
 import './sharing.css'
 
 export interface LaneBlock {
@@ -26,6 +27,8 @@ export interface LaneBlock {
   all_day: boolean
   /** null = a Busy block. */
   title: string | null
+  /** The colour I gave this person (one of palette C's 16). */
+  color: string
 }
 
 const SAME = new Map<string, LaneBlock[]>() // keeps the array while nothing changed: a grid redraws on a new one
@@ -54,7 +57,7 @@ export function useLanes(range: { start: Date; end: Date } | undefined, key = 'g
     lanes.forEach((c, i) => {
       const d = results[i]?.data
       if (!d?.level) return
-      for (const o of occurrences(d, range.start, range.end)) out.push({ id: `${c.circle_id}:${o.id}:${o.startsAt}`, partnerId: c.partner_id, name: c.partner_name, lane: i, starts_at: o.startsAt, ends_at: o.endsAt, all_day: o.allDay, title: o.title })
+      for (const o of occurrences(d, range.start, range.end)) out.push({ id: `${c.circle_id}:${o.id}:${o.startsAt}`, partnerId: c.partner_id, name: c.partner_name, lane: i, starts_at: o.startsAt, ends_at: o.endsAt, all_day: o.allDay, title: o.title, color: c.color })
     })
     const sig = JSON.stringify(out)
     const prev = SAME.get(key)
@@ -94,12 +97,12 @@ export function LaneChips({ compact = false }: { compact?: boolean }) {
               type="button"
               className={`sh-chip${compact ? ' is-compact' : ''}`}
               aria-pressed={c.show_lane}
-              aria-label={`${c.show_lane ? 'Hide' : 'Show'} ${c.partner_name}’s day`}
+              aria-label={`${c.show_lane ? 'Hide' : 'Show'} ${c.partner_name}’s lane on my calendar`}
               title={c.paused_until ? `${c.partner_name} · paused · ${pauseLine(c.paused_until, new Date(), zone)}` : undefined}
               onClick={() => void setLane(c, !c.show_lane).catch(fail)}
               onContextMenu={(e) => { e.preventDefault(); setMenu({ c, x: e.clientX, y: e.clientY }) }}
             >
-              <Avatar name={c.partner_name} size={28} />
+              <Avatar name={c.partner_name} size={28} color={c.color} />
               {!compact && c.partner_name}
             </button>
             {!compact && <button
@@ -121,8 +124,13 @@ export function LaneChips({ compact = false }: { compact?: boolean }) {
           onClose={() => setMenu(null)}
           label={`${menu.c.partner_name}’s lane`}
           items={[
-            { label: menu.c.show_lane ? `Hide ${menu.c.partner_name}’s day` : `Show ${menu.c.partner_name}’s day`, onClick: () => void setLane(menu.c, !menu.c.show_lane).catch(fail) },
-            { label: menu.c.paused_until ? 'Paused · resume or change…' : 'Pause sharing…', onClick: () => ui.openPerson(menu.c.circle_id) },
+            { label: menu.c.show_lane ? `Hide ${menu.c.partner_name}’s lane` : `Show ${menu.c.partner_name}’s lane`, onClick: () => void setLane(menu.c, !menu.c.show_lane).catch(fail) },
+            ...(menu.c.paused_until
+              ? [{ label: 'Resume sharing', onClick: () => void setPause(menu.c, null).catch(fail) }]
+              : [
+                  { label: PAUSE_NAME.forever, onClick: () => void setPause(menu.c, pauseUntil('forever', new Date())).then(() => useToastStore.getState().push({ message: pausedSaid('infinity', new Date(), zone) })).catch(fail) },
+                  { label: PAUSE_NAME.hour, onClick: () => void setPause(menu.c, pauseUntil('hour', new Date())).then(() => useToastStore.getState().push({ message: pausedSaid(pauseUntil('hour', new Date()), new Date(), zone) })).catch(fail) },
+                ]),
             { label: 'Sharing settings', onClick: () => ui.openPerson(menu.c.circle_id) },
           ]}
         />

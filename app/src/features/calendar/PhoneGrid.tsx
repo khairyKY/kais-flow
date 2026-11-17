@@ -25,6 +25,7 @@ import '../tasks/TaskRow.css' // the long-press bloom (.kf-press-bloom)
 import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
 import { appZone } from '../../lib/appZone'
 import { laneSays, type LaneBlock } from '../sharing/Lane'
+import { herVars } from '../sharing/parts'
 import { useToastStore } from '../../lib/toastStore'
 
 // ── The phone time grid (Calendar Phone.dc.html 7a–7n): 64px hours, blocks as fills (MK Week Strip
@@ -149,7 +150,7 @@ const MIN_BLOCK_PX = 24
 const COMPACT_PX = minToPx(25)
 const titleLines = (h: number) => Math.max(1, Math.min(3, Math.floor((h - 12 - 18) / 18)))
 /** A lane block as the grid's own block shape, for dayBlocks (title '' = Busy). */
-const laneEvent = (l: LaneBlock): CalendarEvent => ({ id: l.id, title: l.title ?? '', starts_at: l.starts_at, ends_at: l.ends_at, all_day: false, task_id: null, source: 'native', gcal_id: null, gcal_etag: null, busy: true, type: 'event', color: null, created_at: l.starts_at, updated_at: l.starts_at, ...({ lane: l.lane, name: l.name } as object) })
+const laneEvent = (l: LaneBlock): CalendarEvent => ({ id: l.id, title: l.title ?? '', starts_at: l.starts_at, ends_at: l.ends_at, all_day: false, task_id: null, source: 'native', gcal_id: null, gcal_etag: null, busy: true, type: 'event', color: null, created_at: l.starts_at, updated_at: l.starts_at, ...({ lane: l.lane, name: l.name, herColor: l.color } as object) })
 const same = (a: Span, b: Span) => a.day === b.day && a.start === b.start && a.end === b.end
 
 export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onShift, onPeek, onTapSlot, onTapBlock, onHoldBlock, onTapMore, onCommit, onDropHeld, overlay, lane }, ref) {
@@ -755,7 +756,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             key={b.event.id}
             type="button"
             className={`pc-lane${b.event.title === '' ? ' is-busy' : ''}`}
-            style={{ top: minToPx(b.start), height: minToPx(b.end - b.start), left: 2, '--lane': (b.event as unknown as LaneBlock).lane } as CSSProperties}
+            style={{ top: minToPx(b.start), height: minToPx(b.end - b.start), left: 2, '--lane': (b.event as unknown as LaneBlock).lane, ...herVars((b.event as unknown as { herColor: string }).herColor) } as CSSProperties}
             aria-label={laneSays({ name: (b.event as unknown as LaneBlock).name, title: b.event.title || null, starts_at: b.event.starts_at, ends_at: b.event.ends_at }, appZone())}
             onClick={(e) => { e.stopPropagation(); useToastStore.getState().push({ message: laneSays({ name: (b.event as unknown as LaneBlock).name, title: b.event.title || null, starts_at: b.event.starts_at, ends_at: b.event.ends_at }, appZone()) }) }}
             onPointerDown={(e) => e.stopPropagation()}
