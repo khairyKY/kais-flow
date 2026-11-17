@@ -104,8 +104,15 @@ api POST "$A_JWT" /rest/v1/projects "{\"id\":\"$P_GROC\",\"name\":\"Groceries\",
 expect "a client can't create a project already shared (the column is the server's)" "null" "$(jqe '.[0].shared_circle_id | tostring')"
 api POST "$A_JWT" /rest/v1/projects "{\"id\":\"$P_SECRET\",\"name\":\"Secret plans\"}"
 api POST "$A_JWT" /rest/v1/projects "{\"id\":\"$P_TRIP\",\"name\":\"Dahab trip\"}"
-api POST "$A_JWT" /rest/v1/tasks "[{\"id\":\"$T_MILK\",\"title\":\"Milk\",\"project_id\":\"$P_GROC\",\"top3\":true},{\"id\":\"$T_EGGS\",\"title\":\"Eggs\",\"project_id\":\"$P_GROC\"},{\"id\":\"$T_PV\",\"title\":\"PVITEM\",\"project_id\":\"$P_GROC\",\"private\":true},{\"id\":\"$T_SECRET\",\"title\":\"SECRETTASK\",\"project_id\":\"$P_SECRET\"},{\"id\":\"$T_ROOT\",\"title\":\"ROOTTASK\"},{\"id\":\"$T_TRIP1\",\"title\":\"Book hostel\",\"project_id\":\"$P_TRIP\"}]"
-expect "A's six tasks are in" "201" "$CODE"
+SEEDED=0
+seed() { api POST "$A_JWT" /rest/v1/tasks "$1"; [ "$CODE" = 201 ] && SEEDED=$((SEEDED + 1)); }
+seed "{\"id\":\"$T_MILK\",\"title\":\"Milk\",\"project_id\":\"$P_GROC\",\"top3\":true}"
+seed "{\"id\":\"$T_EGGS\",\"title\":\"Eggs\",\"project_id\":\"$P_GROC\"}"
+seed "{\"id\":\"$T_PV\",\"title\":\"PVITEM\",\"project_id\":\"$P_GROC\",\"private\":true}"
+seed "{\"id\":\"$T_SECRET\",\"title\":\"SECRETTASK\",\"project_id\":\"$P_SECRET\"}"
+seed "{\"id\":\"$T_ROOT\",\"title\":\"ROOTTASK\"}"
+seed "{\"id\":\"$T_TRIP1\",\"title\":\"Book hostel\",\"project_id\":\"$P_TRIP\"}"
+expect "A's six tasks are in" "6" "$SEEDED"
 
 # ---------------------------------------------------------------------------------------------
 section "sharing starts: only the owner, only into a circle of theirs, never with a Private item in it"
@@ -213,6 +220,12 @@ api PATCH "$B_JWT" "/rest/v1/tasks?id=eq.$T_PVNEW" '{"title":"x"}'
 expect "…and B can't see or touch it there" "blocked" "$(blocked)"
 
 # ---------------------------------------------------------------------------------------------
+section "the list functions touch only what a list needs"
+LIST_LEAKY=$(sql -c "select string_agg(p.proname, ',') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and (p.proname like 'share\_list\_%' or p.proname in ('circles_split_lists', 'tasks_share_list_before', 'tasks_share_list_after', 'projects_share_guard')) and pg_get_functiondef(p.oid) ~* '\m(from|join|into|update|table)[[:space:]]+(public\.)?(journal_entries|people|interactions|notes|books|quotes|commentary|inbox_items|routines|routine_completions|time_entries|integrations|mcp_keys|app_settings|chat_messages|push_subscriptions)\M'")
+expect "no list function's body names the journal, people, health, chat or any other private table" "" "$LIST_LEAKY"
+expect "the list functions exist (the check above isn't empty)" "t" "$(sql -c "select count(*) >= 6 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and (p.proname like 'share\_list\_%' or p.proname in ('circles_split_lists', 'tasks_share_list_before', 'tasks_share_list_after', 'projects_share_guard'))")"
+
+# ---------------------------------------------------------------------------------------------
 section "the double tick converges, the first tick keeps the credit, activity says who"
 sql -c "delete from activity_log where user_id in ('$A_ID','$B_ID')" >/dev/null
 T1=$(ago 40); T2=$(ago 30); T3=$(ago 20)
@@ -273,7 +286,7 @@ api POST "$B_JWT" /rest/v1/tasks "{\"id\":\"c0000000-0000-0000-0000-0000000000f4
 expect "B can't add to the old list: cut at once (at most an orphan row of her own, never in A's list)" "0" "$(sql -c "select count(*) from tasks where title = 'too late' and user_id = '$A_ID'")"
 api PATCH "$B_JWT" "/rest/v1/tasks?id=eq.$T_EGGS" '{"title":"edited after the cut"}'
 expect "B can't edit it" "blocked" "$(blocked)"
-api GET "$B_JWT" "/rest/v1/tasks?project_id=eq.$P_GROC&select=id"
+api GET "$B_JWT" "/rest/v1/tasks?project_id=eq.$P_GROC&user_id=eq.$A_ID&select=id"
 expect "B can't read the original" "[]" "$BODY"
 api GET "$B_JWT" "/rest/v1/projects?id=eq.$P_GROC&select=id"
 expect "…nor its project row" "[]" "$BODY"
