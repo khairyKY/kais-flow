@@ -8,6 +8,11 @@ describe('deepLinkRoute', () => {
     expect(deepLinkRoute('kaisflow://focus')).toBe('/focus')
     expect(deepLinkRoute('kaisflow://task/3f2a9c1e-0000-4000-8000-000000000001')).toBe('/tasks/3f2a9c1e-0000-4000-8000-000000000001')
   })
+  it('opens a sharing invite on its confirm step', () => {
+    expect(deepLinkRoute('kaisflow://join/K7QMR4TX')).toBe('/join/K7QMR4TX')
+    expect(deepLinkRoute('kaisflow://join/k7qmr4tx')).toBe('/join/K7QMR4TX')
+    expect(deepLinkRoute('kaisflow://join/short')).toBeNull()
+  })
   it('reads what Windows and browsers do to a link', () => {
     expect(deepLinkRoute('kaisflow://today/')).toBe('/today')
     expect(deepLinkRoute('KaisFlow://Today?x=1')).toBe('/today')

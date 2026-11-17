@@ -1,0 +1,134 @@
+/* Sharing with people you connect (v1.6.6): the screens of design-export/Partner sharing flows.html and Sharing looks.html
+   (the 8-tile code, the level list with previews, the full "Her day" card, the thin Heather lane). Existing tokens only: her colour is
+   palette C's Heather (--blk-heather), dashed on a block. */
+
+.sh-av { flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; line-height: 1; font-family: var(--font-ui); background: var(--paper-bone); border: 1px solid var(--line-control); color: var(--ink-body); }
+.sh-av.is-her { background: color-mix(in srgb, var(--blk-heather) 30%, var(--paper-parchment)); border-color: color-mix(in srgb, var(--blk-heather) 65%, transparent); color: var(--blk-heather-ink); }
+.sh-av.is-dim { opacity: 0.5; filter: grayscale(1); }
+
+/* ── sheets ── */
+.sh-sheet { padding: 0 16px 8px; }
+.sh-sheet h4 { margin: 0; font: 600 var(--fs-lead) / 1.2 var(--font-display); color: var(--ink-body); }
+.sh-sub { margin-top: 4px; font-size: var(--fs-meta-l); color: var(--ink-muted); line-height: 1.4; }
+.sh-lbl { margin: 16px 0 6px; font-size: var(--fs-caption); font-weight: 600; color: var(--ink-body); }
+.sh-cap { margin-top: 6px; font-size: var(--fs-meta-l); color: var(--ink-muted); line-height: 1.35; }
+.sh-btns { display: flex; gap: 10px; margin-top: 16px; }
+.sh-btns > * { flex: 1; }
+.sh-btns.is-col { flex-direction: column; gap: 4px; }
+.sh-err { margin-top: 10px; font-size: var(--fs-body-s); color: var(--acc-terra-ink); line-height: 1.4; }
+.sh-msg { margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-input); border: 1px dashed var(--line-dashed); font-size: var(--fs-meta-l); color: var(--ink-muted); line-height: 1.4; }
+.sh-msg b { display: block; margin-bottom: 2px; font-weight: 600; color: var(--ink-body); }
+.sh-exp { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+
+/* ── the code, in 8 tiles ── */
+.sh-tiles { display: flex; align-items: center; gap: 6px; }
+.sh-tile { flex: 1; min-width: 0; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-input); border: 1px solid var(--line-control); background: var(--paper-bone); font: 600 var(--fs-display-l) / 1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--ink-body); }
+.sh-tile.is-focus { border: 2px solid var(--sel-bg); }
+.sh-dash { flex: none; color: var(--ink-faint); font-size: var(--fs-lead); }
+.sh-code-in { position: relative; }
+.sh-code-in input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; /* ds-ok: 16px keeps iOS from zooming the page on focus; the field is invisible, the tiles are the look */ }
+.sh-paste { margin-top: 14px; }
+
+/* ── people ── */
+.sh-person { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px; background: none; border: 0; text-align: left; color: var(--ink-body); font: inherit; cursor: pointer; }
+.sh-person + .sh-person { border-top: 1px solid var(--line-card); }
+.sh-person:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-pb { flex: 1; min-width: 0; }
+.sh-p1 { font-size: var(--fs-body-l); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-p2 { display: flex; align-items: center; gap: 6px; margin-top: 2px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sh-never { display: flex; gap: 12px; padding: 12px 16px; font-size: var(--fs-body-s); color: var(--ink-muted); line-height: 1.4; }
+.sh-never b { color: var(--ink-body); }
+.sh-never svg { flex: none; margin-top: 2px; }
+.sh-head { display: flex; align-items: center; gap: 14px; margin: 4px 0 8px; }
+.sh-head .sh-name { font: 500 var(--fs-display-l) / 1.15 var(--font-display); letter-spacing: -0.015em; }
+.sh-head .sh-since { font-size: var(--fs-body-s); color: var(--ink-muted); }
+
+/* ── the level list with previews ── */
+.sh-levels { border: 1px solid var(--line-card); border-radius: var(--radius-card); background: var(--paper-parchment); overflow: hidden; }
+.sh-level { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 8px 12px 8px 14px; background: none; border: 0; text-align: left; color: var(--ink-body); font: inherit; cursor: pointer; }
+.sh-level + .sh-level { border-top: 1px solid var(--line-card); }
+.sh-level:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-radio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-control); background: var(--paper-bone); }
+.sh-level[aria-checked='true'] .sh-radio { border: 6px solid var(--sel-bg); background: var(--paper-parchment); }
+.sh-level .sh-lb { flex: 1; min-width: 0; font-size: var(--fs-body); font-weight: 500; }
+.sh-level .sh-ld { font-size: var(--fs-meta-l); font-weight: 400; color: var(--ink-muted); line-height: 1.3; }
+.sh-mini { flex: none; display: flex; flex-direction: column; justify-content: center; width: 64px; height: 34px; padding: 0 6px; border-radius: var(--radius-block); border: 1px solid color-mix(in srgb, var(--blk-rose) 45%, transparent); background: color-mix(in srgb, var(--blk-rose) var(--blk-fill), var(--paper-parchment)); font-size: var(--fs-meta); font-weight: 500; line-height: 1.15; overflow: hidden; }
+.sh-mini small { font-size: var(--fs-mono-s); font-weight: 400; color: var(--blk-rose-ink); }
+.sh-mini.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-rose) var(--blk-fill), var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 8px); }
+
+.sh-rule { display: flex; gap: 10px; margin: 12px 0; padding: 12px 14px; border-radius: var(--radius-card); background: var(--paper-bone); border: 1px solid var(--line-card); font-size: var(--fs-body-s); line-height: 1.4; }
+.sh-rule svg { flex: none; margin-top: 2px; }
+.sh-rule .sh-now { margin-top: 4px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sh-rule .sh-now b { color: var(--ink-body); }
+.sh-banner { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; padding: 12px 12px 12px 14px; border-radius: var(--radius-card); background: var(--paper-bone); border: 1px solid var(--line-card); font-size: var(--fs-body-s); line-height: 1.35; }
+.sh-banner .sh-bt { flex: 1; min-width: 0; }
+.sh-banner .sh-bt span { display: block; margin-top: 2px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sh-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sh-box { margin-top: 12px; border: 1px solid var(--line-card); border-radius: var(--radius-card); background: var(--paper-parchment); }
+.sh-box > * + * { border-top: 1px solid var(--line-card); }
+.sh-row { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 12px 0 16px; font-size: var(--fs-body-l); }
+.sh-row .sh-grow { flex: 1; min-width: 0; }
+.sh-row small { display: block; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sh-row.is-col { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 16px; }
+.sh-danger { color: var(--acc-terra-ink); font-weight: 600; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; width: 100%; min-height: 52px; padding: 0 16px; }
+
+/* ── Her day on Today: the full card after Top 3 ── */
+.sh-day { margin-top: 14px; }
+.sh-day-h { display: flex; align-items: baseline; margin: 0 4px 6px; font-size: var(--fs-caption); font-weight: 600; color: var(--ink-body); }
+.sh-day-h .sh-note { font-weight: 500; color: var(--ink-faint); white-space: pre; }
+.sh-day-h .sh-link { margin-left: auto; font-weight: 600; color: var(--acc-terra-ink); background: none; border: 0; cursor: pointer; font: inherit; font-weight: 600; padding: 4px; }
+.sh-card { padding: 10px 12px 12px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); }
+.sh-card-h { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); font-weight: 600; }
+.sh-card-h .sh-menu { margin-left: auto; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink-faint); cursor: pointer; }
+.sh-blk { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-top: 6px; padding: 0 10px; border-radius: var(--radius-block); border: 1px dashed color-mix(in srgb, var(--blk-heather) 70%, transparent); background: color-mix(in srgb, var(--blk-heather) var(--blk-fill), var(--paper-parchment)); font-size: var(--fs-body-s); color: var(--ink-body); }
+.sh-blk .sh-lb { flex: none; font-weight: 600; }
+.sh-blk .sh-tm { flex: none; font-size: var(--fs-meta); color: var(--blk-heather-ink); font-variant-numeric: tabular-nums; }
+.sh-blk .sh-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-blk .sh-cd { flex: none; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sh-blk.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) var(--blk-fill), var(--paper-parchment)) 0 5px, var(--paper-parchment) 5px 10px); }
+.sh-bar { height: 4px; margin-top: 8px; border-radius: 2px; background: color-mix(in srgb, var(--ink-body) 9%, transparent); overflow: hidden; }
+.sh-bar i { display: block; height: 100%; background: var(--blk-heather); }
+.sh-sec { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line-dashed); }
+.sh-sec-l { font-size: var(--fs-mono-s); color: var(--ink-faint); margin-bottom: 4px; }
+.sh-task { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: var(--fs-body-s); }
+.sh-task + .sh-task { border-top: 1px solid var(--line-card); }
+.sh-task .sh-mk { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 5px; border: 1.5px solid var(--check-border); display: flex; align-items: center; justify-content: center; font-size: var(--fs-mono-s); color: var(--check-mark); }
+.sh-task.is-done .sh-mk { background: var(--check-fill); border-color: var(--check-fill); }
+.sh-task.is-done .sh-tt { color: var(--ink-hairline); text-decoration: line-through; }
+.sh-task .sh-tt { flex: 1; min-width: 0; }
+.sh-task .sh-notes { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sh-star { color: var(--acc-gold); }
+.sh-paused { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); color: var(--ink-faint); font-size: var(--fs-body); }
+.sh-paused b { color: var(--ink-muted); }
+
+/* ── the thin Heather lane (a FullCalendar background event; CalendarGrid carries kf-her) ── */
+.kf-has-her .fc-timegrid-col-events { margin-left: 14px; }
+.fc .fc-bg-event.kf-her { width: 9px; right: auto; opacity: 1; border-radius: 5px; background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); pointer-events: auto; cursor: pointer; margin-left: calc(var(--kf-lane, 0) * 11px); }
+.fc .fc-bg-event.kf-her.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
+.fc .fc-bg-event.kf-her .fc-event-title { display: none; }
+
+/* the avatar chip that turns a lane on and off (the calendar toolbar and the phone header) */
+.sh-chip { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px 0 6px; border-radius: var(--radius-pill); border: 1px solid var(--line-control); background: var(--paper-bone); font: 500 var(--fs-body) var(--font-ui); color: var(--ink-body); cursor: pointer; }
+.sh-chip[aria-pressed='true'] { background: var(--sel-bg); border-color: var(--sel-bg); color: var(--sel-ink); }
+.sh-chip[aria-pressed='false'] .sh-av { opacity: 0.5; filter: grayscale(1); }
+.sh-chip:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-chips-bar { display: inline-flex; gap: 8px; align-items: center; }
+.sh-menu-pop { width: 260px; padding: 6px; border-radius: var(--radius-card); background: var(--paper-parchment); border: 1px solid var(--line-card); box-shadow: var(--shadow-popover); }
+.sh-menu-pop button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-input); background: none; color: var(--ink-body); font: inherit; font-size: var(--fs-body); text-align: left; cursor: pointer; }
+.sh-menu-pop button:hover { background: var(--paper-bone); }
+.sh-menu-pop button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ── the view link: its page for someone with no account ── */
+.sv-page { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; color: var(--ink-body); }
+.sv-page h1 { margin: 0; font: 500 var(--fs-display-l) / 1.15 var(--font-display); letter-spacing: -0.015em; }
+.sv-sub { margin: 4px 0 14px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.sv-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sv-nav button { min-height: 40px; padding: 0 14px; border-radius: var(--radius-pill); border: 1px solid var(--line-control); background: var(--paper-bone); font: 500 var(--fs-body) var(--font-ui); color: var(--ink-body); cursor: pointer; }
+.sv-nav button:disabled { opacity: 0.42; cursor: default; }
+.sv-blk { display: flex; align-items: center; gap: 10px; min-height: 40px; margin-bottom: 8px; padding: 0 12px; border-radius: var(--radius-block); border: 1px solid color-mix(in srgb, var(--ink-muted) 45%, transparent); background: color-mix(in srgb, var(--ink-muted) var(--blk-fill), var(--paper-parchment)); font-size: var(--fs-body-s); }
+.sv-blk.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-muted) var(--blk-fill), var(--paper-parchment)) 0 5px, var(--paper-parchment) 5px 10px); }
+.sv-blk .sv-tm { flex: none; font-size: var(--fs-meta-l); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.sv-blk .sv-t { flex: 1; min-width: 0; }
+.sv-foot { margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--line-dashed); font-size: var(--fs-meta-l); color: var(--ink-muted); line-height: 1.4; }
+.sv-gone { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; text-align: center; }
+.sv-gone p { margin: 0; color: var(--ink-muted); font-size: var(--fs-body-s); }
