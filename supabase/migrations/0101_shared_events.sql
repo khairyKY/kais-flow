@@ -11,7 +11,7 @@
 --     are RPCs: each checks that the caller is a member of the circle, that the other person is the circle's other member and
 --     that the connection is current (not paused, not left). Editing is the owner's plain write to their own copy (offline-able,
 --     through the outbox): an AFTER trigger copies title / time / all-day to the other copy, only while the connection is
---     current. "Remove from mine" is a plain delete of one's own copy: the trigger unlinks it and tells the other copy
+--     current. "Remove from mine" is a plain delete of one's own copy: the copy stays linked (a restore or Undo puts it back) and the trigger tells the other copy
 --     ("Reem can't go"). Nothing else of the other copy is ever touched.
 --   * Leaving (the circle goes) turns every copy into a plain event of its own person; an invite nobody answered goes.
 --   * Free together (shared_free_together) returns WINDOWS only: both calendars' busy time (a Private item counts as busy,
@@ -78,13 +78,8 @@ begin
   new.shared_id := old.shared_id; new.shared_circle := old.shared_circle; new.shared_with := old.shared_with;
   new.share_status := old.share_status; new.share_peer_status := old.share_peer_status; new.share_edited_by := old.share_edited_by;
   if old.shared_id is null then return new; end if;
-  -- A plain delete of my copy is "Remove from mine" (or "Decline"): mine becomes a plain event in Trash (the other copy hears it in
-  -- share_cal_sync, an AFTER trigger: a BEFORE one can't touch a row the same statement is changing).
-  if old.deleted_at is null and new.deleted_at is not null then
-    new.shared_id := null; new.shared_circle := null; new.shared_with := null;
-    new.share_status := null; new.share_peer_status := null; new.share_edited_by := null;
-    return new;
-  end if;
+  -- A plain delete of my copy is "Remove from mine": it stays linked (so a restore / Undo puts it back on the shared event) and the
+  -- other copy hears it in share_cal_sync (an AFTER trigger: a BEFORE one can't touch a row the same statement is changing).
   new.private := false; -- both of you are on it: nothing about it is Private
   if (new.title, new.starts_at, new.ends_at, new.all_day) is distinct from (old.title, old.starts_at, old.ends_at, old.all_day) then
     new.share_edited_by := old.user_id;
@@ -101,7 +96,7 @@ create or replace function share_cal_sync() returns trigger language plpgsql sec
 declare sib calendar_events;
 begin
   if share_ctx() or old.shared_id is null then return null; end if;
-  if new.shared_id is null then -- the guard unlinked it: a plain delete, "Remove from mine" - the other copy reads "can't go"
+  if old.deleted_at is null and new.deleted_at is not null then -- "Remove from mine": the other copy reads "can't go"
     perform share_ctx_set(true);
     update calendar_events s set share_peer_status = 'declined' where s.shared_id = old.shared_id and s.id <> old.id and s.user_id <> old.user_id;
     perform share_ctx_set(false);
@@ -114,7 +109,9 @@ begin
   perform share_ctx_set(true);
   update calendar_events set title = new.title, starts_at = new.starts_at, ends_at = new.ends_at, all_day = new.all_day,
     share_edited_by = coalesce(new.share_edited_by, new.user_id),
-    deleted_at = case when old.deleted_at is not null and new.deleted_at is null then null else deleted_at end
+    deleted_at = case when old.deleted_at is not null and new.deleted_at is null then null else deleted_at end,
+    -- a restore of a copy that was removed from mine: the other copy reads "can't go" no more
+    share_peer_status = case when old.deleted_at is not null and new.deleted_at is null and share_peer_status = 'declined' then new.share_status else share_peer_status end
   where id = sib.id;
   perform share_ctx_set(false);
   return null;

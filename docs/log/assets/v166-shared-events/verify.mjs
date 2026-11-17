@@ -290,7 +290,11 @@ const rpcOf = (state, fn) => state.rpcs.filter((r) => r.fn === fn)
   await page.getByRole('menuitem', { name: 'Remove from mine' }).click(); await sleep(800)
   const rm = state.writes.find((w) => w.table.startsWith('calendar_events') && /Walk by the Nile/.test(JSON.stringify(w.body)))
   check('Remove from mine is a plain delete of my own copy through the outbox (deleted_at), not an RPC', !!rm && /"deleted_at":"2026-/.test(JSON.stringify(rm.body)) && rpcOf(state, 'shared_event_delete_both').length === 1, JSON.stringify(rm?.body ?? null).slice(0, 160))
-  check('…and says Reem still has it', /Removed from your calendar\. Reem still has it/.test(await text(page)))
+  check('…and says Reem still has it, with an Undo', /Removed from your calendar · Walk by the Nile\. Reem still has it/.test(await text(page)) && (await page.getByRole('button', { name: 'Undo' }).count()) >= 1)
+  const before = state.writes.length
+  await page.getByRole('button', { name: 'Undo' }).last().click(); await sleep(700)
+  const undone = state.writes.slice(before).find((w) => w.table.startsWith('calendar_events') && /Walk by the Nile/.test(JSON.stringify(w.body)))
+  check('Undo restores my copy (deleted_at back to null) through the outbox', !!undone && /"deleted_at":null/.test(JSON.stringify(undone.body)), JSON.stringify(undone?.body ?? null).slice(0, 140))
   allErrors.push(...errors)
   await page.context().close()
 }

@@ -11,7 +11,7 @@
 #   no answer       stays on both until it starts, then share_events_expire drops both
 #   edit            either person's plain write to their own copy changes both; colour and private stay their own
 #   delete          "Delete for both" (both to Trash; a restore brings both back); "Remove from mine" (a plain delete: the
-#                   other copy reads declined, mine is a plain event in Trash)
+#                   other copy reads declined, mine is in Trash still linked; a restore (Undo) puts it back)
 #   leave           the circle goes: each keeps a plain copy; an unanswered invite goes from the invited side
 #   locked          the link columns can't be forged; a write to the other's row changes nothing; a third user can't make,
 #                   answer, delete, edit or see one; a pause stops the writes that reach the other person
@@ -252,11 +252,13 @@ expect "…and B's restore brings both back" "0" "$(ev "shared_id = '$SID' and d
 # remove from mine
 api PATCH "$B_JWT" "/rest/v1/calendar_events?id=eq.$EV_B" "{\"deleted_at\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
 expect "B removes it from hers (a plain delete): A's copy reads declined, still A's" "declined $SID" "$(ev "id = '$EV_A'" "share_peer_status || ' ' || shared_id")"
-expect "…B's copy is a plain event in Trash" "true  " "$(ev "id = '$EV_B'" "(deleted_at is not null)::text || ' ' || coalesce(shared_id::text, '') || ' ' || coalesce(shared_with::text, '')")"
+expect "…B's copy is in Trash, still linked (so Undo can put it back)" "true $SID" "$(ev "id = '$EV_B'" "(deleted_at is not null)::text || ' ' || coalesce(shared_id::text, '')")"
 api PATCH "$A_JWT" "/rest/v1/calendar_events?id=eq.$EV_A" '{"title":"ZZDATE five"}'
-expect "A's later edits don't reach the removed copy" "ZZDATE four" "$(ev "id = '$EV_B'" title)"
+expect "A's later edits reach the removed copy too (Undo brings back the latest)" "ZZDATE five" "$(ev "id = '$EV_B'" title)"
+api PATCH "$B_JWT" "/rest/v1/calendar_events?id=eq.$EV_B" '{"deleted_at":null}'
+expect "Undo (a restore of B's copy): it is B's again, linked, and A's copy reads accepted again" "false $SID accepted" "$(ev "id = '$EV_B'" "(deleted_at is not null)::text || ' ' || shared_id") $(ev "id = '$EV_A'" share_peer_status)"
 rpc "$A_JWT" shared_event_delete_both "{\"p_event\":\"$EV_A\"}"
-expect "A can still delete his own copy (nobody else is on it)" "true" "$(jqe '.ok | tostring')"
+expect "A deletes for both after the Undo: both copies in Trash" "true 2" "$(jqe '.ok | tostring') $(ev "shared_id = '$SID' and deleted_at is not null" 'count(*)')"
 api DELETE "$A_JWT" "/rest/v1/calendar_events?id=eq.$EV_A"
 sql -c "delete from calendar_events where title like 'ZZ%'" >/dev/null
 

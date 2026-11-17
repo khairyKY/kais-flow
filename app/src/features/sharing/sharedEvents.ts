@@ -12,7 +12,8 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { useToastStore } from '../../lib/toastStore'
-import { deleteEvent } from '../calendar/api'
+import { toastUndo } from '../../lib/undo'
+import { deleteEvent, restoreEvent } from '../calendar/api'
 import type { CalendarEvent } from '../../lib/types'
 import type { Connection } from './model'
 
@@ -103,12 +104,13 @@ export function sharedNameOf(e: Pick<CalendarEvent, 'shared_with'>): string {
   return queryClient.getQueryData<Connection[]>(['share_connections'])?.find((c) => c.partner_id === e.shared_with)?.partner_name ?? 'Them'
 }
 
-/** "Remove from mine": the person's own plain delete of their copy (offline-able, through the outbox). The server unlinks it and the
- * other copy reads "can't go"; nothing of theirs is touched. No Undo: a removed copy is a plain event in Trash, not a shared one. */
+/** "Remove from mine": the person's own plain delete of their copy (offline-able, through the outbox). The copy stays linked in Trash and the
+ * other copy reads "can't go"; nothing of theirs is touched. Undo is a restore: it is on the shared event again and they read it as before. */
 export function removeFromMine(e: CalendarEvent): void {
   const name = sharedNameOf(e)
+  const prior = { ...e }
   deleteEvent(e)
-  useToastStore.getState().push({ message: `Removed from your calendar. ${name} still has it.` })
+  toastUndo(`Removed from your calendar · ${e.title}. ${name} still has it.`, () => restoreEvent(prior))
 }
 
 /** Accept or Decline, with the words for what came back. */
