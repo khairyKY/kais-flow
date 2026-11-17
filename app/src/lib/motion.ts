@@ -128,6 +128,13 @@ export function idPhase(id: string): number {
   return (h >>> 0) / 4294967296
 }
 
+/** What the hook returns for `open` and its exit-flag. A flag still true while `open` is true is the exit that
+ * a re-open overtook (a press closed the popover and its own click opened it again inside the 100 ms): it is
+ * not closing any more, it is open. Pure, so it is tested. */
+export function overlayPhase(open: boolean, exiting: boolean): { mounted: boolean; closing: boolean } {
+  return { mounted: open || exiting, closing: exiting && !open }
+}
+
 // F4 Motion 3c — overlay exit (140ms). Render while `mounted`; add the matching
 // `--out` class (kf-overlay-card--out / kf-scrim--out / kf-sheet--out / kf-drawer--out)
 // while `closing`. Esc obeys immediately under reduced-motion (duration collapses to 0).
@@ -138,12 +145,15 @@ export function useOverlayExit(open: boolean, duration = 140): { mounted: boolea
   useEffect(() => {
     const was = prevOpen.current
     prevOpen.current = open
-    if (open || !was) return // opening, or never was open — nothing to animate out
+    // v165-block-click: a re-open during the exit used to leave `closing` stuck true (this effect's cleanup had
+    // cleared the timer that would have reset it), so the new popover was drawn already fading out for good.
+    if (open) return setClosing(false)
+    if (!was) return // never was open — nothing to animate out
     setClosing(true)
     const t = setTimeout(() => setClosing(false), reduced ? 0 : duration)
     return () => clearTimeout(t)
   }, [open, duration, reduced])
-  return { mounted: open || closing, closing }
+  return overlayPhase(open, closing)
 }
 
 // F4 Motion 3e — list breathing, the exit half. Call BEFORE removing the row from
