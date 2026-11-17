@@ -5,6 +5,8 @@ import { Icon } from '../../components/Icon'
 import { Button, Segmented } from '../../components/kit'
 import { appZone } from '../../lib/appZone'
 import { cancelInvite, useConnections, useInvites } from './api'
+import { queryClient } from '../../lib/queryClient'
+import { HER_KEYS, createHerWidgetKey, stopHerWidgetKey, useHerWidgetKeys } from './herWidgetKeys'
 import { createShareLink, expiryWords, renewShareLink, stopShareLink, useShareLinks, type LinkLevel } from './links'
 import { Avatar, NeverShared, copyText, shareText } from './parts'
 import { LEVEL_NAME, RELATION_NAME, formatCode, pauseLine } from './model'
@@ -62,6 +64,7 @@ export function SharingSettings() {
         <NeverShared />
       </Sec>
       <ViewLinks />
+      <HerWidgetKeys />
     </>
   )
 }
@@ -115,3 +118,58 @@ function ViewLinks() {
   )
 }
 
+
+/** Flow 6: her day on your home screen (Android: nothing to set up) and on your PC (Rainmeter: one key per computer, for one person). */
+function HerWidgetKeys() {
+  const { data: people = [] } = useConnections()
+  const { data: keys = [] } = useHerWidgetKeys()
+  const [shown, setShown] = useState<{ id: string; link: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  if (!people.length) return null
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save. Check the connection and try again.') } finally { setBusy(false) }
+  }
+  return (
+    <Sec title="Widgets" sub="Her day on your phone’s home screen: long-press it, pick Widgets, then Kai’s Flow, then Her day. On your PC, a Rainmeter skin asks every 5 minutes with a key of its own.">
+      {people.map((c) => {
+        const mine = keys.filter((k) => k.owner_id === c.partner_id)
+        return (
+          <div key={c.circle_id} style={{ padding: 12 }}>
+            <div className="sh-lbl" style={{ marginTop: 0 }}>{c.partner_name}’s day on your PC</div>
+            {mine.map((k) => (
+              <div key={k.id} className="sh-person" style={{ cursor: 'default' }}>
+                <Icon name="link" size={22} />
+                <span className="sh-pb">
+                  <span className="sh-p1" style={{ display: 'block' }}>Key for “{k.label}”</span>
+                  <span className="sh-p2">Made {day(k.created_at)} · {k.last_used_at ? `last used ${day(k.last_used_at)}` : 'not used yet'}</span>
+                </span>
+                <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await stopHerWidgetKey(k.id); setShown(null) })}>Stop this key</Button>
+              </div>
+            ))}
+            {shown && mine.some((k) => k.id === shown.id) && (
+              <>
+                <div className="sh-cap">Copy it now, it won’t be shown again:</div>
+                <div className="st-mono-box" dir="ltr" style={{ color: 'var(--ink-body)', wordBreak: 'break-all' }}>{shown.link}</div>
+                <div className="sh-btns">
+                  <Button variant="secondary" icon={<Icon name="clipboard" size={18} />} onClick={() => void copyText(shown.link, 'Key copied')}>Copy</Button>
+                </div>
+              </>
+            )}
+            <div className="sh-cap">Shows {c.partner_name}’s day at the level you both allow. Never your own. Read-only: stop it any time, and disconnecting stops it for good.</div>
+            <div className="sh-btns">
+              <Button variant="secondary" loading={busy} onClick={() => void run(async () => {
+                const link = await createHerWidgetKey(c.partner_id, 'Desktop')
+                const made = queryClient.getQueryData<{ id: string; owner_id: string }[]>(HER_KEYS)?.filter((k) => k.owner_id === c.partner_id).at(-1)
+                setShown({ id: made?.id ?? '', link })
+              })}>Make a key</Button>
+            </div>
+          </div>
+        )
+      })}
+      {err && <div className="sh-err" role="alert">{err}</div>}
+    </Sec>
+  )
+}
