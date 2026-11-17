@@ -31,7 +31,7 @@ import { reviewClosed, reviewWeekOn, weeklyReviewDue, type ReviewSettings } from
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { eventRemindersDue, reminderKey, type RemindRow } from '../_shared/eventReminder.ts'
 import type { RuleBetween } from '../_shared/series.ts'
-import { birthdayNotice, deliver, is24h, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, reviewNotice, routineNotice, termsNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { birthdayNotice, deliver, is24h, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, reviewNotice, routineNotice, shareNotice, termsNotice, testNotice, type Notice, type NoticePrefs, type ShareNoticeRow } from './copy.ts'
 import { LEGAL_KEY, PRIVACY_VERSION, TERMS_VERSION } from '../_shared/legal.ts'
 // rrule is CommonJS: Deno takes its default export only (see mcp/index.ts).
 import rrulePkg from 'npm:rrule@2'
@@ -567,6 +567,50 @@ async function runTerms(req: Request): Promise<Response> {
   return jsonResponse(req, { told, sent })
 }
 
+/** pg_cron, every 5 minutes (0103): partner notices that are due (`Reem added Dinner, Fri 8 PM`). The server already masked each payload to the
+ * viewer's level, held it through their quiet hours and folded a 5-minute burst into one; this only words it (copy.ts shareNotice) and sends
+ * ONE push per recipient per person on the recipient's own devices. A paused notification stays due and goes on a later tick; a notice with
+ * no device is simply marked sent (the in-app strip still has it). */
+async function runShareNotices(req: Request): Promise<Response> {
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+  const clock = runClock()
+  const { data: due, error } = await supabase.rpc('share_notices_due', { p_limit: 500 })
+  if (error) throw error
+  type Due = ShareNoticeRow & { id: string; recipient_id: string; actor_id: string }
+  const rows = (due ?? []) as Due[]
+  if (rows.length === 0) return jsonResponse(req, { told: 0, sent: 0 })
+  const ids = [...new Set(rows.map((r) => r.recipient_id))]
+  const [settings, subs] = await Promise.all([
+    supabase.from('app_settings').select('*').in('user_id', ids),
+    supabase.from('push_subscriptions').select('id, user_id, endpoint, keys').in('user_id', ids),
+  ])
+  if (settings.error || subs.error) throw settings.error ?? subs.error
+  const prefsByUser = new Map(((settings.data ?? []) as UserPrefs[]).map((p) => [p.user_id, p]))
+  let told = 0
+  let sent = 0
+  for (const userId of ids) {
+    try {
+      const prefs = prefsByUser.get(userId)
+      const zone = userZone(prefs?.timezone)
+      const mine = ((subs.data ?? []) as Subscription[]).filter((s) => s.user_id === userId)
+      const byActor = new Map<string, Due[]>()
+      for (const r of rows.filter((x) => x.recipient_id === userId)) byActor.set(r.actor_id, [...(byActor.get(r.actor_id) ?? []), r])
+      for (const [actorId, group] of byActor) {
+        const payload = deliver(shareNotice(group, actorId, prefs, zone), prefs, clock.now, zone)
+        if (!payload) continue // paused: still due on the next tick
+        if (mine.length) sent += (await sendToSubscriptions(supabase, userId, mine, payload)).sent
+        const { error: markError } = await supabase.rpc('share_notices_pushed', { p_ids: group.map((r) => r.id) })
+        if (markError) throw markError
+        told++
+      }
+    } catch (e) {
+      console.error(`notify share_notice: user ${userId} failed`, e)
+    }
+  }
+  // Counts only, never who or what - the pg_net response log holds no personal data.
+  return jsonResponse(req, { told, sent })
+}
+
 /** Signed-in user path: a test push to the caller's own devices, nothing else. */
 async function runTestForUser(req: Request, userId: string, token: string): Promise<Response> {
   // Runs as the user (RLS applies) — the service-role key is not needed for this path at all.
@@ -603,7 +647,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { kind, scheduled, capture_id } = (await req.json()) as { kind: NotifyKind | 'paper_ready' | 'terms'; scheduled?: boolean; capture_id?: unknown }
+    const { kind, scheduled, capture_id } = (await req.json()) as { kind: NotifyKind | 'paper_ready' | 'terms' | 'share_notice'; scheduled?: boolean; capture_id?: unknown }
 
     if (!serviceRole) {
       // Digests, nudges, reminders and sweeps are cron-only; a user may only test their own devices.
@@ -616,6 +660,7 @@ Deno.serve(async (req) => {
       return await runPaperReady(req, capture_id)
     }
     if (kind === 'terms') return await runTerms(req)
+    if (kind === 'share_notice') return await runShareNotices(req)
     if (!KINDS.includes(kind)) return jsonResponse(req, { error: 'unknown kind' }, 400)
     return await runForAllUsers(req, kind as NotifyKind, scheduled === true)
   } catch (e) {

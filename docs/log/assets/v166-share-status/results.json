@@ -1,0 +1,122 @@
+[
+  {
+    "name": "the person page has Show my status to Reem, Off, with the one-line rule",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Notices from Reem: one kind to start, every kind Off, and what a notice never does",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the kind’s segment sits on Off",
+    "ok": true,
+    "detail": "Busy only,Partner,Off"
+  },
+  {
+    "name": "the switch calls share_status_on_set for this circle",
+    "ok": true,
+    "detail": "[{\"fn\":\"share_status_on_set\",\"body\":{\"p_circle\":\"c1000000-0000-4000-8000-000000000001\",\"p_on\":true}}]"
+  },
+  {
+    "name": "…and reads On at once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Push on a kind calls share_notice_pref_set added/push",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Off sends off (the server drops the key)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "status off, no notices: Today shows no status line and no strip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the status line says what Reem sees, and that it is auto",
+    "ok": true,
+    "detail": "‹ Kai's Flow Personal · Cairo Plan › Due Today 2 This Week 2 This Month 2 Upcoming 0 Someday 0 Tend Today Inbox Calendar"
+  },
+  {
+    "name": "the sheet: From the Now card with its words, words in a tap, own words, Clears, never a place",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a word in a tap sets it, clearing tonight by default",
+    "ok": true,
+    "detail": "{\"p_words\":\"Commuting\",\"p_clear\":\"tonight\"}"
+  },
+  {
+    "name": "own words go with the chosen clear time",
+    "ok": true,
+    "detail": "{\"p_words\":\"Back at 4\",\"p_clear\":\"hour\"}"
+  },
+  {
+    "name": "the sheet says when they clear, and offers Clear it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Clear it sends no words",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the From the Now card switch calls share_status_auto",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the same status line under the Now card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Her day card: the status sits next to her name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the lane chip carries it too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "at Titles the server answers no status, and nothing says \"hidden\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a status past its end time is simply gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "one strip, from Reem, one line each in her words",
+    "ok": true,
+    "detail": "From Reem Added Dinner, Fri 8 PM Invited you to Date night, Sat 2 PM Added 3 things Dismiss Today's three Draft the CV chapter ✶ GOAL OF THE DAY Due today Reem’"
+  },
+  {
+    "name": "Dismiss writes dismissed_at for what was shown, and the strip is gone",
+    "ok": true,
+    "detail": "{\"method\":\"PATCH\",\"table\":\"share_notices\",\"query\":\"?id=in.%28b0000001-0000-4000-8000-000000000001%2Cb0000002-0000-4000-8000-000000000001%2Cb0000003-0000-4000-8000-000000000001%29\",\"body\":{\"dismissed_at\":\"2026-11-18T10:09:04.811Z\"}}"
+  },
+  {
+    "name": "phone: the strip is there too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
