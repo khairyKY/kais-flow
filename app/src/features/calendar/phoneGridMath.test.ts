@@ -94,9 +94,9 @@ describe('blocks: spans, clipping, the 15-minute drag', () => {
     expect(movedText(tyre, { ...tyre, start: 975, end: 1005 }, '2026-09-27')).toBe('Moved to 16:15')
     expect(movedText(tyre, { day: '2026-09-28', start: 600, end: 630 }, '2026-09-27')).toBe('Moved to Mon 28 10:00')
   })
-  it('a tap lands on its quarter, with room for 30 minutes', () => {
+  it('a tap lands on its quarter, with room for the hour it makes', () => {
     expect(tapStart(963)).toBe(960)
-    expect(tapStart(1435)).toBe(1410)
+    expect(tapStart(1435)).toBe(1380)
   })
 })
 

@@ -109,6 +109,7 @@ const footer = (lang) => {
       <div class="foot-brand">${kmark(48)}<div><div class="foot-name" lang="en">Kai’s Flow</div><div class="hand">${t.tag}</div></div></div>
       <nav class="foot-links" aria-label="${t.foot}">${FOOT[lang].map(([l, h]) => `<a href="${h}">${l}</a>`).join('')}</nav>
     </div>
+    <div class="foot-sig"><span class="sig" lang="en" dir="ltr"><svg class="sig-gl" viewBox="0 0 48 48" aria-hidden="true"><text x="22" y="35" text-anchor="middle" font-family="Caveat,'Segoe Script',cursive" font-weight="500" font-size="50">k</text><path d="M5 42C14 37.5 28 44.5 43 38" fill="none" stroke-width="2.6" stroke-linecap="round"/></svg><span class="sig-tx">made by kai, egypt</span></span></div>
     <p class="fine">${t.fine}</p>
   </div>
 </footer>`

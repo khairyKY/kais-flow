@@ -326,3 +326,9 @@
 /* v164-kai-issues (Kai 2026-11-07: it hid the late evening): the grid scrolls past the card — its height
    (useNowReserve) and the gap under and over it. */
 .pc.has-now .pc-scroll { padding-bottom: calc(var(--kf-now-h, 0px) + var(--sp-3) * 2); }
+
+/* Adding a block (createDraft, Kai 2026-11-16): a tap on an empty slot draws the hour here, the title typed in place.
+   16px, so iOS doesn't zoom the page when the field takes focus; selectable, though a block's text isn't. */
+.pc-draft { cursor: text; padding: 4px 10px; z-index: 3; }
+.pc-draft .kf-draft-input { font-size: 16px; /* ds-ok: iOS zooms a focused field under 16px */ line-height: 22px; }
+.pc-draft .kf-draft-time { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

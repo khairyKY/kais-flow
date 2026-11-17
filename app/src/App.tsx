@@ -46,7 +46,6 @@ const InboxPage = dragPage(() => import('./features/inbox/InboxPage'), 'InboxPag
 const TasksPage = dragPage(() => import('./features/tasks/TasksPage'), 'TasksPage', true)
 const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage', true)
 const TaskEditorPage = page(() => import('./features/calendar/TaskEditorPage'), 'TaskEditorPage')
-const CreatePage = page(() => import('./features/calendar/CreatePage'), 'CreatePage')
 const RoutinesPage = page(() => import('./features/routines/RoutinesPage'), 'RoutinesPage')
 const WeeklyReviewPage = page(() => import('./features/rituals/WeeklyReviewPage'), 'WeeklyReviewPage')
 const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'SettingsPage')
@@ -131,7 +130,6 @@ const router = createBrowserRouter([
           { path: 'tasks', element: <TasksPage /> },
           { path: 'tasks/:id', element: <TaskEditorPage /> },
           { path: 'calendar', element: <CalendarPage /> },
-          { path: 'new', element: <CreatePage /> },
           { path: 'routines', element: <RoutinesPage /> },
           { path: 'weekly-review', element: <WeeklyReviewPage /> },
           { path: 'settings', element: <SettingsPage /> },

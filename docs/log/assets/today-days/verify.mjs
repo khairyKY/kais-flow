@@ -224,16 +224,16 @@ for (const theme of ['day', 'night']) {
   // See tomorrow: 1 click.
   await nav.getByRole('button', { name: 'Next day' }).click()
   await sleep(700)
-  check(`${tag} › (1 click) → ?day=${TOMORROW}, "Tuesday, October 27"`, dayParam(page) === TOMORROW && (await text(page.locator('.td-date'))) === 'Tuesday, October 27', `${page.url()} · ${await text(page.locator('.td-date'))}`)
-  check(`${tag} …Back to today shows`, (await page.getByRole('button', { name: 'Back to today' }).count()) === 1)
-  const three = page.locator('section[aria-label="Tomorrow\'s three"]')
+  check(`${tag} › (1 click) → ?day=${TOMORROW}, "Tuesday, October 27"`, dayParam(page) === TOMORROW && /^Tomorrow\s+Tuesday, October 27$/.test(await text(page.locator('.td-date'))), `${page.url()} · ${await text(page.locator('.td-date'))}`)
+  check(`${tag} …no Today chip one day out (it shows from two days away, and on past days)`, (await page.getByRole('button', { name: 'Back to today' }).count()) === 0)
+  const three = page.locator('section[aria-label="Top 3"]')
   const list = page.locator('section[aria-label="Tomorrow\'s tasks"]')
-  check(`${tag} …"Tomorrow's three" (nothing planted yet) and "Tomorrow's tasks · 5" with its tasks in time order`, /Nothing planted yet/.test(await text(three)) && /Tomorrow's tasks · 5/.test(await text(list)), (await text(list)).replace(/\n/g, ' / '))
+  check(`${tag} …"Tomorrow's three" (nothing planted yet) and "Tomorrow's tasks · 5" with its tasks in time order`, /0 of 3 planted/.test(await text(three)) && /Tomorrow's tasks · 5/.test(await text(list)), (await text(list)).replace(/\n/g, ' / '))
   const order = await list.locator('.td-row-title').allInnerTexts()
   check(`${tag} …in time order: letter 09:00, Dentist 10:00, rent 11:30, plants 18:00, Mum 19:00`, order.join('|') === 'Draft the quarterly letter|Dentist|Pay the rent|Water the plants|Call Mum', order.join('|'))
   check(`${tag} …the Dentist row carries its block's time`, /10:00/.test(await text(list.locator(`#task-${id(T.DENTIST)}`))), await text(list.locator(`#task-${id(T.DENTIST)}`)))
   const card = page.locator('section.td-now')
-  check(`${tag} …the ribbon has the day's 2 blocks, no now line; the calendar list has Team sync (the Dentist is a row)`, (await card.locator('.td-rb').count()) === 2 && (await card.locator('.td-ribbon-now').count()) === 0 && /Team sync/.test(await text(card.locator('.td-next'))) && !/Dentist/.test(await text(card.locator('.td-next'))), await text(card.locator('.td-next')))
+  check(`${tag} …the ribbon has the day's 2 blocks, no now line; the calendar list has the Dentist and Team sync`, (await card.locator('.td-rb').count()) === 2 && (await card.locator('.td-ribbon-now').count()) === 0 && /Team sync/.test(await text(card.locator('.td-next'))) && /Dentist/.test(await text(card.locator('.td-next'))), await text(card.locator('.td-next')))
   check(`${tag} …the rituals are a quiet line ("Tonight's Shut down…"); no Now card head, no Top 3 goal card`, /Tonight's Shut down starts from these three/.test(await text(page.locator('section[aria-label="Rituals"]'))) && (await page.locator('.td-rit').count()) === 0 && (await page.locator('.kf-goal-row').count()) === 0)
   check(`${tag} …routines for the day: 0/3, read-only`, /Routines · 0\/3/.test(await text(page.locator('section[aria-label="Routines"]'))) && (await page.locator('section[aria-label="Routines"] [role="checkbox"]:disabled').count()) === 3)
   check(`${tag} …the add pill is there for the day`, (await page.locator('.td-pill-field').count()) === 1)
@@ -247,18 +247,18 @@ for (const theme of ['day', 'night']) {
   await settle(state)
   let s = seeds(state, w0)
   check(`${tag} ☆ on a row → ritual.seeded for ${TOMORROW}, through the outbox`, s.length === 1 && s[0].event_type === 'ritual.seeded' && s[0].entity_id === id(T.LETTER) && s[0].payload?.for_date === TOMORROW, JSON.stringify(s))
-  check(`${tag} …the row moves into Tomorrow's three, ★, and the toast has Undo`, (await three.locator(`#task-${id(T.LETTER)}`).count()) === 1 && (await list.locator(`#task-${id(T.LETTER)}`).count()) === 0 && (await toastSoon(page, 'Planted for Tomorrow')))
+  check(`${tag} …the row moves into Tomorrow's three (its goal card)`, (await three.locator(`#task-${id(T.LETTER)}`).count()) === 1 && (await list.locator(`#task-${id(T.LETTER)}`).count()) === 0)
   w0 = state.writes.length
-  await page.locator('.kf-toast').filter({ hasText: 'Planted for Tomorrow' }).getByRole('button', { name: /Undo/ }).click()
+  await page.keyboard.press('Control+z') // a quiet edit on desktop: the global undo history, not a toast
   await settle(state)
   s = seeds(state, w0)
-  check(`${tag} …Undo → ritual.unseeded, the row goes back`, s.length === 1 && s[0].event_type === 'ritual.unseeded' && (await list.locator(`#task-${id(T.LETTER)}`).count()) === 1, JSON.stringify(s))
+  check(`${tag} …Ctrl+Z → ritual.unseeded, the row goes back`, s.length === 1 && s[0].event_type === 'ritual.unseeded' && (await list.locator(`#task-${id(T.LETTER)}`).count()) === 1, JSON.stringify(s))
   for (const n of [T.LETTER, T.RENT, T.WATER]) {
     await list.locator(`#task-${id(n)}`).hover()
     await plant(n)
     await sleep(350)
   }
-  check(`${tag} three planted → "3 of 3 planted"`, (await three.locator('.td-row-title').count()) === 3 && /3 of 3 planted/.test(await text(three)), await text(three))
+  check(`${tag} three planted → "3 of 3 planted"`, (await three.locator('.td-row-title').count()) === 2 && (await three.locator('.kf-goal-row').count()) === 1 && /3 of 3 planted/.test(await text(three)), await text(three))
   w0 = state.writes.length
   await list.locator(`#task-${id(T.MUM)}`).hover()
   await plant(T.MUM)
@@ -269,7 +269,7 @@ for (const theme of ['day', 'night']) {
   // A reload keeps the day (and the planted three come back from the log).
   await page.reload({ waitUntil: 'networkidle' })
   await sleep(1500)
-  check(`${tag} reload keeps ?day — still Tuesday, still three planted`, dayParam(page) === TOMORROW && /Tuesday, October 27/.test(await text(page.locator('.td-date'))) && (await three.locator('.td-row-title').count()) === 3, await text(three))
+  check(`${tag} reload keeps ?day — still Tuesday, still three planted`, dayParam(page) === TOMORROW && /Tuesday, October 27/.test(await text(page.locator('.td-date'))) && (await three.locator('.td-row-title').count()) === 2, await text(three))
 
   // Keys: Shift+→ / Shift+←.
   await page.keyboard.press('Shift+ArrowRight')
@@ -295,27 +295,28 @@ for (const theme of ['day', 'night']) {
   await pop.getByRole('button', { name: 'Next month' }).click()
   await pop.locator('[data-day="2026-11-03"]').click()
   await sleep(700)
-  check(`${tag} …Nov 3 → ?day=2026-11-03, "Tuesday, November 3", the picker closed`, dayParam(page) === '2026-11-03' && (await text(page.locator('.td-date'))) === 'Tuesday, November 3' && (await pop.count()) === 0, page.url())
+  check(`${tag} …Nov 3 → ?day=2026-11-03, "Tuesday, November 3", the picker closed`, dayParam(page) === '2026-11-03' && /^Tue, Nov 3\s+in 8 days$/.test(await text(page.locator('.td-date'))) && (await pop.count()) === 0, page.url())
   check(`${tag} …"The day's tasks · 1": Renew the passport`, /The day's tasks · 1/.test(await text(page.locator('section[aria-label="The day\'s tasks"]'))) && /Renew the passport/.test(await text(main(page))))
   check(`${tag} …the rituals line for a later day`, /the morning ritual starts from these three/.test(await text(page.locator('section[aria-label="Rituals"]'))))
 
   // A past day: Sat 24 Oct.
   await page.goto(`${BASE}/today?day=${PAST}`, { waitUntil: 'networkidle' })
   await sleep(1500)
-  const done = page.locator('section[aria-label="Done"]')
+  const done = page.locator('section[aria-label="Also done"]')
   const left = page.locator('section[aria-label="Left open"]')
-  check(`${tag} past (?day=${PAST}): "Saturday, October 24"; Done · 2 — the day's goal first`, (await text(page.locator('.td-date'))) === 'Saturday, October 24' && /Done · 2/.test(await text(done)) && (await done.locator('.td-row-title').allInnerTexts()).join('|') === 'Send the invoice|Tidy the garage', (await done.locator('.td-row-title').allInnerTexts()).join('|'))
-  check(`${tag} …Left open · 1 (Fix the gate) with Move ▾, no checkbox to tick it`, /Left open · 1/.test(await text(left)) && (await left.getByRole('button', { name: /^Move/ }).count()) === 1 && (await left.locator('[role="checkbox"]').count()) === 0)
-  check(`${tag} …its line, routines 2/3 ticked (read-only), the calendar's Lunch with Salma`, /A slow, good Saturday/.test(await text(page.locator('section[aria-label="The day\'s line"]'))) && /Routines · 2\/3/.test(await text(page.locator('section[aria-label="Routines"]'))) && (await page.locator('section[aria-label="Routines"] [role="checkbox"]:disabled').count()) === 3 && /Lunch with Salma/.test(await text(page.locator('section.td-now'))))
+  const topThree = page.locator('section[aria-label="Top 3"]')
+  check(`${tag} past (?day=${PAST}): "Sat, Oct 24 · 2 days ago"; Top 3 · 1 of 1 done with the day's goal (the invoice) first; Also done · 1 (the garage)`, /^Sat, Oct 24\s+2 days ago$/.test(await text(page.locator('.td-date'))) && /1 of 1 done/.test(await text(topThree)) && /Send the invoice/.test(await text(page.locator('.kf-goal-row'))) && /Also done · 1/.test(await text(done)) && (await done.locator('.td-row-title').allInnerTexts()).join('|') === 'Tidy the garage')
+  check(`${tag} …Left open · 1 (Fix the gate) with Move ▾, no tickable box`, /Left open · 1/.test(await text(left)) && (await left.getByRole('button', { name: /^Move/ }).count()) === 1 && (await left.locator('[role="checkbox"]').first().evaluate((el) => el.disabled === true || el.getAttribute('aria-disabled') === 'true')))
+  check(`${tag} …its line, routines 2/3 ticked (read-only), the calendar's Lunch with Salma`, /A slow, good Saturday/.test(await text(page.locator('.td-rail'))) && /Routines · 2\/3/.test(await text(page.locator('section[aria-label="Routines"]'))) && (await page.locator('section[aria-label="Routines"] [role="checkbox"]:disabled').count()) === 3 && /Lunch with Salma/.test(await text(page.locator('section.td-now'))))
   check(`${tag} …no rituals, no add pill, no stars`, (await page.locator('section[aria-label="Rituals"]').count()) === 0 && (await page.locator('.td-pill').count()) === 0 && (await page.locator('.td-star').count()) === 0)
-  check(`${tag} …the summary: "2 done · 1 left open · routines 2/3"`, /2 done · 1 left open · routines 2\/3/.test(await text(page.locator('.td-sum'))), await text(page.locator('.td-sum')))
+  check(`${tag} …the summary: "2 done · 1 slipped · routines 2/3"`, /2 done · 1 slipped · routines 2\/3/.test(await text(page.locator('.td-sum'))), await text(page.locator('.td-sum')))
   await shot(page, `${tag}-past`)
   // Reopen: the ✓ on a done row.
   w0 = state.writes.length
   await done.locator(`#task-${id(T.GARAGE)}`).getByTitle('Reopen').click()
   await settle(state)
   const reopened = posts(state, 'tasks', w0)
-  check(`${tag} …✓ reopens (status todo) with Undo`, reopened.some((t) => t.id === id(T.GARAGE) && t.status === 'todo') && (await toastSoon(page, 'Reopened')), reopened.map((t) => `${t.title}:${t.status}`).join(', '))
+  check(`${tag} …✓ reopens (status todo)`, reopened.some((t) => t.id === id(T.GARAGE) && t.status === 'todo') , reopened.map((t) => `${t.title}:${t.status}`).join(', '))
   // Move ▾ → Today.
   await left.getByRole('button', { name: /^Move/ }).click()
   await sleep(500)
@@ -336,7 +337,7 @@ for (const theme of ['day', 'night']) {
 // ── D · last night's seed shows on tomorrow (one seeds model with the evening ritual) ──
 if (want('d-seeded')) {
   const { ctx, page, errors } = await open('09:40', { seeded: true }, { path: `/today?day=${TOMORROW}` })
-  const three = page.locator('section[aria-label="Tomorrow\'s three"]')
+  const three = page.locator('section[aria-label="Top 3"]')
   check('d-seeded a seed the evening planted for tomorrow is in Tomorrow\'s three', (await three.locator(`#task-${id(T.RENT)}`).count()) === 1 && /1 of 3 planted/.test(await text(three)), await text(three))
   noErrors('d-seeded', errors)
   await ctx.close()
@@ -349,7 +350,7 @@ for (const theme of ['day', 'night']) {
   const { ctx, page, cdp, errors, state } = await open('09:40', {}, { theme, view: phone })
   const strip = page.locator('.tp-daynav')
   // phone-today (2026-10-26, Day strip options 4): on Today the Now · Day switch takes the picker's place; the title opens the picker.
-  check(`${tag} Today: the title unchanged ("Monday, Oct 26"), the strip "‹ Yesterday · Now | Day · Tomorrow ›"`, (await text(page.locator('.tp-bar-title'))) === 'Monday, Oct 26' && /Yesterday/.test(await text(strip)) && /Tomorrow/.test(await text(strip)) && (await strip.locator('.tp-view').count()) === 1 && (await strip.getByRole('button', { name: 'Back to today' }).count()) === 0, (await text(strip)).replace(/\n/g, ' '))
+  check(`${tag} Today: the title unchanged ("Monday, Oct 26"), the strip "‹ Yesterday · the picker · Tomorrow ›"`, (await text(page.locator('.tp-bar-title'))) === 'Monday, Oct 26' && /Yesterday/.test(await text(strip)) && /Tomorrow/.test(await text(strip)) && (await strip.getByRole('button', { name: 'Back to today' }).count()) === 0, (await text(strip)).replace(/\n/g, ' '))
   check(`${tag} …the Today menu (rituals) is still in the bar`, (await page.locator('.tp-bar').getByRole('button', { name: 'Today menu' }).count()) === 1)
   const fit = await page.evaluate(() => ({ sw: document.scrollingElement.scrollWidth, iw: innerWidth }))
   check(`${tag} …nothing runs sideways`, fit.sw <= fit.iw + 1, JSON.stringify(fit))
@@ -357,10 +358,10 @@ for (const theme of ['day', 'night']) {
 
   await tap(cdp, page, strip.getByRole('button', { name: 'Next day' }))
   await sleep(500)
-  check(`${tag} › (1 tap) → tomorrow: "Tuesday, Oct 27", Back to today in the strip, no Today menu`, dayParam(page) === TOMORROW && (await text(page.locator('.tp-bar-title'))) === 'Tuesday, Oct 27' && (await strip.getByRole('button', { name: 'Back to today' }).count()) === 1 && (await page.locator('.tp-bar').getByRole('button', { name: 'Today menu' }).count()) === 0, page.url())
-  const three = page.locator('section[aria-label="Tomorrow\'s three"]')
+  check(`${tag} › (1 tap) → tomorrow: "Tomorrow · Tue, Oct 27", no Today pill one day out, no Today menu`, dayParam(page) === TOMORROW && /^Tomorrow\s+Tue, Oct 27$/.test(await text(page.locator('.tp-bar-title'))) && (await strip.getByRole('button', { name: 'Back to today' }).count()) === 0 && (await page.locator('.tp-bar').getByRole('button', { name: 'Today menu' }).count()) === 0, page.url())
+  const three = page.locator('section[aria-label="Top 3"]')
   const list = page.locator('section[aria-label="Tomorrow\'s tasks"]')
-  check(`${tag} …its three, On the calendar (Team sync), its tasks · 5, routines, the rituals line`, /Nothing planted yet/.test(await text(three)) && /Team sync/.test(await text(page.locator('section[aria-label="On the calendar"]'))) && /Tomorrow's tasks · 5/.test(await text(list)) && /Routines · 0\/3/.test(await text(page.locator('section[aria-label="Routines"]'))) && /Tonight's Shut down/.test(await text(page.locator('.tp-day-rituals'))))
+  check(`${tag} …its three, the day panel (Team sync), its tasks · 5, routines, Plan tomorrow`, /nothing planted/.test(await text(three)) && /Team sync/.test(await text(page.locator('section[aria-label="The day"]'))) && /Tomorrow's tasks · 5/.test(await text(list)) && /Routines · 3 daily/.test(await text(page.locator('section[aria-label="Routines"]'))) && (await page.locator('section[aria-label="Plan tomorrow"]').count()) === 1)
   await shot(page, `${tag}-tomorrow`)
   let w0 = state.writes.length
   await tap(cdp, page, list.locator(`#task-${id(T.WATER)}`).getByRole('button', { name: /^Plant/ }))
@@ -378,8 +379,8 @@ for (const theme of ['day', 'night']) {
   await shot(page, `${tag}-picker`, false)
   await tap(cdp, page, sheet.locator(`[data-day="${PAST}"]`))
   await sleep(800)
-  check(`${tag} …a tap on Sat 24 → the past day, the sheet closed`, dayParam(page) === PAST && (await text(page.locator('.tp-bar-title'))) === 'Saturday, Oct 24' && (await sheet.count()) === 0, page.url())
-  check(`${tag} …Done · 2, Left open · 1 with Move ▾, its line, routines 2/3`, /Done · 2/.test(await text(page.locator('section[aria-label="Done"]'))) && (await page.locator('section[aria-label="Left open"]').getByRole('button', { name: /^Move/ }).count()) === 1 && /A slow, good Saturday/.test(await text(page.locator('section[aria-label="The day\'s line"]'))) && /Routines · 2\/3/.test(await text(page.locator('section[aria-label="Routines"]'))))
+  check(`${tag} …a tap on Sat 24 → the past day, the sheet closed`, dayParam(page) === PAST && /^Sat, Oct 24\s+2 days ago$/.test(await text(page.locator('.tp-bar-title'))) && (await sheet.count()) === 0, page.url())
+  check(`${tag} …Top 3 · 1 of 1 done, Also done · 1, Left open · 1 with Move ▾, its line, routines 2/3`, /1 of 1 done/.test(await text(page.locator('section[aria-label="Top 3"]'))) && /Also done · 1/.test(await text(page.locator('section[aria-label="Also done"]'))) && (await page.locator('section[aria-label="Left open"]').getByRole('button', { name: /^Move/ }).count()) === 1 && /A slow, good Saturday/.test(await text(page.locator('section[aria-label="The day\'s line"]'))) && /Routines · 2\/3/.test(await text(page.locator('section[aria-label="Routines"]'))))
   await shot(page, `${tag}-past`)
 
   await tap(cdp, page, strip.getByRole('button', { name: 'Back to today' }))

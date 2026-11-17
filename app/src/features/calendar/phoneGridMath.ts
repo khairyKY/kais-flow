@@ -172,8 +172,11 @@ export function movedText(from: Span, to: Span, today: string): string {
   return `Moved to ${to.day === from.day ? '' : `${dayHint(to.day, today)} `}${clockText(fromMin(to.start))}`
 }
 
-/** A tap on the empty grid: the quarter it landed in, room left for the default 30 minutes. */
-export const tapStart = (minute: number): number => Math.min(Math.max(0, Math.floor(minute / SNAP_MIN) * SNAP_MIN), DAY_MIN - 30)
+/** A tap on the empty grid makes an hour (Kai 2026-11-16: add to the calendar, type in place). */
+export const TAP_MIN = 60
+
+/** A tap on the empty grid: the quarter it landed in, room left for the hour a tap makes. */
+export const tapStart = (minute: number): number => Math.min(Math.max(0, Math.floor(minute / SNAP_MIN) * SNAP_MIN), DAY_MIN - TAP_MIN)
 
 /** "3:00–3:30 PM" — or "15:00–15:30" on the 24-hour clock (lib/clock). */
 export const rangeText = (start: number, end: number): string => clockRange(fromMin(start), end >= DAY_MIN ? '24:00' : fromMin(end))

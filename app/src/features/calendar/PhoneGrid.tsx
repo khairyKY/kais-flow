@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { Checkbox, Chip } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
@@ -16,6 +16,8 @@ import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
 import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, glideMs, glidePanes, glidePeek, glideTarget, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { slotAt } from './slots'
+import { DraftTitle } from './DraftTitle'
+import { useDraft } from './createDraft'
 import { isSynced, repeatCheckName } from './blockMenuSpec'
 import { gcalEditable } from './gcal'
 import { RepeatGlyph } from './checkGlyphs'
@@ -191,6 +193,14 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const multi = days.length > 1
   const h24 = useHour24() // the person's clock (lib/clock) for the gutter and the now tag
   const nowMin = toMin(cairoTimeKey(now))
+  // A block being added (createDraft): drawn in its kind's hue where it will sit, its title typed in place.
+  const draft = useDraft((s) => s.draft)
+  const draftSpan = draft && !draft.allDay ? eventSpan({ starts_at: draft.start, ends_at: draft.end }) : null
+  const draftLook = useMemo(() => {
+    if (!draft) return null
+    const at = new Date(0).toISOString()
+    return look({ id: 'draft', title: '', starts_at: draft.start, ends_at: draft.end, all_day: false, task_id: null, source: 'native', gcal_id: null, gcal_etag: null, busy: true, type: draft.kind === 'task' ? 'task' : draft.kind === 'block' ? 'time_block' : 'event', color: null, created_at: at, updated_at: at })
+  }, [draft, look])
 
   // Back (and Esc) puts a lifted block down before anything else closes.
   useEscapeStack(!!lift, () => setLift(null))
@@ -742,6 +752,14 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           return block(b.event, b.start, b.end, geo, b)
         })}
         {/* At most three drawn at once; the rest collapse into "+N" at the top-right of the stack. */}
+        {live && draftSpan && draftLook && draftSpan.day === day && (
+          <div
+            className="pc-block pc-draft"
+            style={{ top: minToPx(draftSpan.start), height: Math.max(MIN_BLOCK_PX, minToPx(draftSpan.end - draftSpan.start)), left: inset.l, width: `calc${full}`, '--pc-fill': draftLook.fill, '--pc-edge': draftLook.edge, '--pc-ink': draftLook.ink } as CSSProperties}
+          >
+            <DraftTitle time={rangeText(draftSpan.start, draftSpan.end)} />
+          </div>
+        )}
         {blocks.map((b) => {
           const slot = ov.get(b.event.id)
           if (slot?.kind !== 'stack' || !slot.hidden.length || lift?.id === b.event.id) return null

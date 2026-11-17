@@ -1,0 +1,172 @@
+[
+  {
+    "name": "A-phone the question shows, optional, with Skip and Save",
+    "ok": true,
+    "detail": "568 1 1"
+  },
+  {
+    "name": "A-phone nothing is written before you answer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-phone appended to today's entry under \"Shut down\" (same id, mood and gratitude kept)",
+    "ok": true,
+    "detail": "[\"A walk before lunch.\\n\\nShut down\\nCoffee and a clear plan helped; email got in the way.\"]"
+  },
+  {
+    "name": "A-phone still one entry for the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-phone shows \"Saved to journal ✓\" + Edit",
+    "ok": true,
+    "detail": "Sunday, Sep 27\nYesterday\nTomorrow\nNothing else today\nTop 3\nAll tasks\nNothing starred for today yet.\nWorth a look\nNothing slipping. Everything was touched this week.\nRituals\nMorning\n0/4\nEvening\n1/4\nContinue\nToday\nInbox\nCalendar\nMore\nShut down\nSun 27 Sep · 3 done\nSweep\nEverything tended ✿\nWhat helped  | edit=1"
+  },
+  {
+    "name": "A-phone no horizontal scroll",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "A-phone the question's controls are ≥ 40 tall",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "A-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-phone the Journal shows the answer and the heading",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-desktop the question shows, optional, with Skip and Save",
+    "ok": true,
+    "detail": "1006 1 1"
+  },
+  {
+    "name": "A-desktop nothing is written before you answer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-desktop appended to today's entry under \"Shut down\" (same id, mood and gratitude kept)",
+    "ok": true,
+    "detail": "[\"A walk before lunch.\\n\\nShut down\\nCoffee and a clear plan helped; email got in the way.\"]"
+  },
+  {
+    "name": "A-desktop still one entry for the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-desktop shows \"Saved to journal ✓\" + Edit",
+    "ok": true,
+    "detail": "‹\nDemo's Flow\nPersonal · Cairo\nPlan\n›\nDue Today\n0\nThis Week\n1\nThis Month\n1\nUpcoming\n0\nSomeday\n0\nTend\nToday\nInbox\nCalendar\nTasks\nProjects\nCultivate\nRoutines\nFocus\nReview\nJournal\nLibrary\nPeople\nActivity\nTrash\nCapture\n⌘\nK\nSunday, September 27\n3 of 3 done\nAdd a task…\nN\nEvening · 1 of 4 done\nShut down th | edit=1"
+  },
+  {
+    "name": "A-desktop no horizontal scroll",
+    "ok": true,
+    "detail": "1280"
+  },
+  {
+    "name": "A-desktop the question's controls are ≥ 40 tall",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "A-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "A-desktop the Journal shows the answer and the heading",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "B no entry yet: one is created with \"Shut down\" + the answer, dated today",
+    "ok": true,
+    "detail": "[\"Shut down\\nCoffee and a clear plan helped; email got in the way.\"]"
+  },
+  {
+    "name": "C Skip folds the question away (Write one to bring it back)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "C Close the day works without an answer (the garden's closed)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "C nothing was written to the journal",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "C the \"line\" step is not logged as done",
+    "ok": true,
+    "detail": "[\"sweep\",\"seeds\",\"goodnight\"]"
+  },
+  {
+    "name": "C no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "C Write one brings the field back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "D the sheet closed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "D re-opened: the answer is shown with Edit, not an empty field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "D Edit opens the saved text in the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "D saving the same text again writes nothing new",
+    "ok": true,
+    "detail": "1 → 1"
+  },
+  {
+    "name": "D editing replaces the block: one entry, one \"Shut down\", the new text, the old gone",
+    "ok": true,
+    "detail": "\"A walk before lunch.\\n\\nShut down\\nWalking helped.\""
+  },
+  {
+    "name": "D Close the day after saving: the entry is still the same one",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "D no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "E a day that already holds the block opens on it (Edit)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "E the edit lands in the same entry",
+    "ok": true,
+    "detail": "[\"A walk before lunch.\\n\\nShut down\\nQuiet helped.\"]"
+  }
+]

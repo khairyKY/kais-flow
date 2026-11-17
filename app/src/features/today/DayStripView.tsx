@@ -1,4 +1,4 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import { useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
@@ -37,7 +37,7 @@ const hm = (s: string | undefined) => {
  * where to enter from. ponytail: module state, since today ↔ another day remounts the page; one second's grace. */
 let enterFrom: { px: number; at: number } | null = null
 
-export function DayStripView({ events, tasks, goalId, onOpen, day, always, onStep }: {
+export function DayStripView({ events, tasks, goalId, onOpen, day, always, onStep, head, foot }: {
   /** The calendar's events (occurrences expanded); the shown day's timed ones are drawn. */
   events: CalendarEvent[]
   tasks: Task[]
@@ -51,6 +51,9 @@ export function DayStripView({ events, tasks, goalId, onOpen, day, always, onSte
   always?: boolean
   /** A swipe on the bar: a day on (+1) or back (-1). */
   onStep?: (n: -1 | 1) => void
+  /** Another day (other-days look A): its panel's title line above the bar, and its block lines under it. */
+  head?: ReactNode
+  foot?: ReactNode
 }) {
   const now = useMinuteNow()
   const h24 = useHour24()
@@ -78,6 +81,7 @@ export function DayStripView({ events, tasks, goalId, onOpen, day, always, onSte
   const at = drop?.at
   return (
     <section aria-label="The day" className="tp-nn tp-dbar-card">
+      {head}
       <div ref={drop?.barRef} className="tp-dbar" data-dropping={drop?.lifting || undefined} role="button" tabIndex={0} aria-label={isToday ? 'Open today on the calendar' : 'Open this day on the calendar'} onClick={openColumn} onKeyDown={(ev) => (ev.key === 'Enter' || ev.key === ' ') && (ev.preventDefault(), openColumn())} {...swipe}>
         <span className="tp-dbar-rail" aria-hidden />
         {lanes.map(({ e, lane }) => {
@@ -115,6 +119,7 @@ export function DayStripView({ events, tasks, goalId, onOpen, day, always, onSte
           <Icon name="chevdown" size={16} />
         </button>
       </div>}
+      {foot}
     </section>
   )
 }

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTasks, completeTask, completeTaskWithUndo, reopenTaskWithUndo, rescheduleDue, undoCompletion } from '../tasks/api'
 import { upsertJournalEntry, useJournalEntries } from '../journal/api'
+import { entriesForDay } from '../journal/journalDay'
+import { noteHome, shutdownNote, tidyNote, withShutdownNote } from '../../../../supabase/functions/_shared/shutdownNote.ts'
 import { useTimeEntries } from '../focus/api'
 import { useProjects } from '../projects/api'
 import { focusedToday } from '../today/todayLayout'
@@ -34,8 +36,11 @@ interface ShutDraft {
   rolled: Record<string, string | null>
   doneHere: string[]
   line: string
+  /** Where the answer went, for when the journal list has not loaded (offline) to say so itself. */
   saved: { id: string; created_at: string; text: string } | null
   editing: boolean
+  /** "Skip" tapped: the question folds away. Nothing is written. */
+  skipped?: boolean
   /** null until touched: the seeds already planted, else the first three suggestions. */
   stars: string[] | null
 }
@@ -138,17 +143,26 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     setSelected(new Set())
   }
 
-  // ── One line (ruling 3): the last two lines in Caveat; Save → "Saved to journal ✓" + Edit. ──
-  const pastLines = journal.filter((e) => e.entry_date < day && e.body.trim() && e.id !== draft.saved?.id).slice(0, 2)
-  const showSaved = !!draft.saved && !draft.editing
+  // ── One question (Kai 2026-11-16): "What helped today, and what got in the way?" Optional, Skip always
+  // there. The answer is a small "Shut down" block in the day's journal entry (the one holding it, else
+  // the day's last, else a new one) — saved through the journal's own path, so it syncs via the outbox,
+  // and saving again replaces the block rather than adding another. The last two lines in Caveat; Save
+  // → "Saved to journal ✓" + Edit. ──
+  const pastLines = journal.filter((e) => e.entry_date < day && e.body.trim()).slice(0, 2)
+  const home: { id?: string; created_at?: string; body: string } | undefined =
+    noteHome(entriesForDay(journal, day)) ?? (draft.saved ? { id: draft.saved.id, created_at: draft.saved.created_at, body: withShutdownNote('', draft.saved.text) } : undefined)
+  const existing = home ? shutdownNote(home.body) : null
+  const showSaved = existing !== null && !draft.editing
   function saveLine(): boolean {
-    const text = draft.line.trim()
+    const text = tidyNote(draft.line)
     if (!text) return false
-    const prior = draft.saved
-    const entry = upsertJournalEntry(prior ? { id: prior.id, created_at: prior.created_at, entry_date: day, body: text } : { entry_date: day, body: text }, !prior)
-    // S8 (polish-f1): the event says a line was written, never what it says.
-    if (!prior) logActivity('journal.line_added', 'ritual', day, { date: day })
-    setDraft({ saved: { id: entry.id, created_at: entry.created_at, text }, editing: false })
+    const body = withShutdownNote(home?.body ?? '', text)
+    if (!home || body !== home.body) {
+      const entry = upsertJournalEntry({ ...home, entry_date: day, body }, !home)
+      // S8 (polish-f1): the event says a line was written, never what it says.
+      if (existing === null) logActivity('journal.line_added', 'ritual', day, { date: day })
+      setDraft({ saved: { id: entry.id, created_at: entry.created_at, text }, editing: false, skipped: false })
+    } else setDraft({ editing: false })
     logStep('line')
     return true
   }
@@ -167,7 +181,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   // tomorrow 09:00), logs the ritual finished, quiets the garden, then the summary (ruling 5).
   function closeTheDay() {
     if (summary || leaving) return
-    const wroteLine = (draft.line.trim() && !showSaved ? saveLine() : false) || !!draft.saved
+    const wroteLine = (draft.line.trim() && !showSaved ? saveLine() : false) || existing !== null
     const plan = closeDay(stars, seeded.map((t) => t.id), new Set(open.map((t) => t.id)))
     plan.seed.forEach((id) => byId.get(id) && setSeed(byId.get(id)!, true))
     plan.unseed.forEach((id) => byId.get(id) && setSeed(byId.get(id)!, false))
@@ -273,7 +287,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
 
   const lineSection = (
     <>
-      <Section label="One line" />
+      <Section label="What helped today, and what got in the way?" />
       <div className="rt-line">
         {pastLines.map((e) => (
           <div key={e.id} className="rt-past">
@@ -285,31 +299,46 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
           <>
             <div className="rt-past" style={{ alignItems: 'center', minHeight: 48, marginTop: 6 }}>
               <span className="rt-past-date">{pastDate(day)}</span>
-              <span className="rt-hand is-mine" style={{ flex: 1, minWidth: 0 }}>{draft.saved!.text}</span>
-              <Button type="button" variant="ghost" onClick={() => setDraft({ editing: true, line: draft.saved!.text })}>
+              <span className="rt-hand is-mine" style={{ flex: 1, minWidth: 0 }}>{existing}</span>
+              <Button type="button" variant="ghost" onClick={() => setDraft({ editing: true, line: existing ?? '' })}>
                 Edit
               </Button>
             </div>
             <div className="rt-saved">Saved to journal ✓</div>
           </>
-        ) : (
+        ) : draft.skipped && !draft.editing ? (
           <div className="rt-line-form">
-            <input
-              className="rt-input"
-              style={{ flex: 1, minWidth: 0 }}
-              value={draft.line}
-              placeholder="How did today go?"
-              aria-label="One line about today"
-              enterKeyHint="done"
-              onChange={(e) => setDraft({ line: e.target.value })}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveLine()
-              }}
-            />
-            <Button type="button" variant="secondary" onClick={saveLine}>
-              Save
+            <span className="rt-note" style={{ flex: 1, minWidth: 0 }}>Skipped. A line is always welcome.</span>
+            <Button type="button" variant="ghost" onClick={() => setDraft({ skipped: false })}>
+              Write one
             </Button>
           </div>
+        ) : (
+          <>
+            <div className="rt-line-form">
+              <input
+                className="rt-input"
+                style={{ flex: 1, minWidth: 0 }}
+                value={draft.line}
+                placeholder="A line is enough…"
+                aria-label="What helped today, and what got in the way?"
+                enterKeyHint="done"
+                onChange={(e) => setDraft({ line: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveLine()
+                }}
+              />
+              <Button type="button" variant="secondary" onClick={saveLine}>
+                Save
+              </Button>
+            </div>
+            <div className="rt-line-form" style={{ marginTop: 0 }}>
+              <span className="rt-note" style={{ flex: 1, minWidth: 0 }}>Optional. Saved to today's journal.</span>
+              <Button type="button" variant="ghost" onClick={() => setDraft({ skipped: true, editing: false, line: '' })}>
+                Skip
+              </Button>
+            </div>
+          </>
         )}
       </div>
     </>

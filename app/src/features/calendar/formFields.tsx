@@ -5,7 +5,7 @@ import { Icon } from '../../components/Icon'
 import { BLOCK_SWATCHES, blockHue, swatchValue } from './blockHue'
 import { placeSwatch } from '../../../../supabase/functions/_shared/colorFollows.ts'
 
-// ── Small form atoms shared by QuickCreate / TaskEditorPage / the block menus —
+// ── Small form atoms shared by TaskEditorPage / the block menus —
 // Editor.dc.html's .flabel / .fhelp / .finput / .fsel / .seg classes, ported as
 // components so the three editor surfaces don't each re-declare the same styles. ──
 
@@ -54,79 +54,9 @@ export function TimeInput({ value, onChange, style, day }: { value: string; onCh
   return <TimeField value={value} onChange={onChange} day={day} style={{ ...inputBase, ...style }} />
 }
 
-// ── Segmented control — Editor .seg/.on, drawn by the kit's Segmented classes (B, D12: a visible edge,
-// the pick ink-filled). Generic over any option value; an option's `color` tints its label at rest. ──
-export function Seg<T extends string>({
-  options,
-  value,
-  onChange,
-  style,
-  dense,
-}: {
-  options: { value: T; label: string; color?: string }[]
-  value: T
-  onChange: (v: T) => void
-  style?: CSSProperties
-  /** Tighter cells, for a row that shares its line (the popover's Busy / Free beside the swatches). */
-  dense?: boolean
-}) {
-  return (
-    <div className="kf-seg" role="group" style={{ display: 'flex', ...style }}>
-      {options.map((o) => {
-        const on = o.value === value
-        return (
-          <button key={o.value} type="button" className="kf-seg-btn" aria-pressed={on} onClick={() => onChange(o.value)} style={{ ...(dense ? { padding: '0 6px', fontSize: 'var(--fs-meta)' } : null), ...(on || !o.color ? null : { color: o.color }) }}>
-            {o.label}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 // ── Accent color swatches — Editor 1c/1d + Overlays §02. Shared by every surface
 // that colors an event/block. cal-blocks: palette C (./blockHue). ──
 export const ACCENT_COLORS: { name: string; value: string | null }[] = [{ name: 'None', value: null }, ...BLOCK_SWATCHES]
-
-export function ColorDots({ value, onChange, size = 22 }: { value: string | null; onChange: (v: string | null) => void; size?: number }) {
-  return (
-    <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
-      {ACCENT_COLORS.map((c) => {
-        const on = swatchValue(value) === c.value // a colour saved before palette C shows as its new swatch
-        return (
-          <button
-            key={c.name}
-            type="button"
-            title={c.name}
-            aria-label={c.name}
-            aria-pressed={on}
-            onClick={() => onChange(c.value)}
-            style={{
-              width: size,
-              height: size,
-              borderRadius: '50%',
-              border: c.value ? 'none' : '1.5px dashed var(--ink-hairline)',
-              background: c.value ?? 'transparent',
-              // Kai 2026-10-12: None reads as picked too (a faint ring), so a block with no colour
-              // shows which swatch it's on.
-              boxShadow: on ? `0 0 0 2.5px ${c.value ?? 'var(--ink-faint)'}` : 'none',
-              outline: on ? '2px solid var(--paper-linen)' : 'none',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 'var(--fs-meta)',
-              color: 'var(--ink-faint)',
-            }}
-          >
-            {!c.value ? '—' : ''}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
 
 // Menu B's swatch tray (cal-blocks, Kai 2026-10-26 — design-export/Calendar extras options.html): under the block's
 // title, a quiet bone tray of None and palette C's 16 swatches in 8 columns (drawn in the theme's own value), and a

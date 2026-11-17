@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { ActionSheet } from '../../components/ActionSheet'
 import { Icon } from '../../components/Icon'
 import { Button } from '../../components/kit'
@@ -30,7 +31,7 @@ import { blockLastDay, railBuckets, railMinutes, scheduledToday } from './replan
 import { NowCard, useNowReserve } from './NowCard'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
-import { addMonths, allDayOn, dayBlocks, eventSpan, glidePanes, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { addMonths, allDayOn, dayBlocks, eventSpan, glidePanes, monthTitle, rangeText, spanIso, TAP_MIN, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneMonth } from './PhoneMonth'
 import { readViewOptions } from './ViewOptionsPopover'
 import { usePrefsVersion } from '../../lib/prefs'
@@ -39,8 +40,9 @@ import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grou
 import { useAreas } from '../areas/api'
 import { useBlockColor } from './blockColor'
 import { placeName } from '../tasks/move'
+import { takeOutsidePress, useDraft } from './createDraft'
 import { PhoneGrid, type BlockLook, type Carry, type PhoneGridHandle } from './PhoneGrid'
-import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
+import { BlockSheet, ScheduleSheet } from './PhoneSheets'
 import type { BlockMenuMode } from './blockMenuSpec'
 import './phoneCalendar.css'
 import { useLinkedEvent } from './linkedEvent'
@@ -54,7 +56,6 @@ const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => 
 
 type Sheet =
   | { k: 'view' }
-  | { k: 'create'; day: string; start: number }
   | { k: 'block'; id: string; start: string; mode?: BlockMenuMode }
   | { k: 'more'; ids: string[] }
   /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
@@ -480,10 +481,15 @@ export function PhoneCalendar() {
         }}
         onPeek={setPeek}
         onTapSlot={(day, minute) => {
+          // The press that just settled a draft was this tap: it only closed it.
+          if (takeOutsidePress()) return
           const start = tapStart(minute)
-          // The slot stays in view above the sheet and the keyboard (7c).
+          // The draft stays in view above the keyboard (7c).
           gridRef.current?.scrollToMinute(start, SHEET_LEAD)
-          setSheet({ k: 'create', day, start })
+          const { starts_at, ends_at } = spanIso({ day, start, end: start + TAP_MIN })
+          // Opened inside the tap: the title field is focused in this very gesture, so the phone's keyboard comes up
+          // with it (iOS / Android WebView raise it for no other focus — capture-type handoff 2026-10-07).
+          flushSync(() => useDraft.getState().open({ start: starts_at, end: ends_at, allDay: false, kind: 'event' }))
         }}
         onTapBlock={tapBlock}
         onHoldBlock={holdBlock}
@@ -528,9 +534,6 @@ export function PhoneCalendar() {
             onSelect: () => setView(v),
           }))}
         />
-      )}
-      {sheet?.k === 'create' && (
-        <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
         <BlockSheet

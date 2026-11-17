@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, isOnDay, pastTasks, viewDay } from './dayView'
+import { captureFor, dayBlocks, dayBounds, dayName, dayNoon, dayTitle, dayWord, futureTasks, isOnDay, pastPlan, pastTasks, viewDay } from './dayView'
 import { liveSeeds, seedPayload, seededTaskIds, SEED_EVENT, UNSEED_EVENT } from '../rituals/loopDay'
 import { parseCommand } from '../command-bar/parseCommand'
 import { zoneDateKey } from '../../lib/dateShortcuts'
@@ -114,11 +114,37 @@ describe("a future day's 3 are the evening ritual's seeds for that date", () => 
   })
 })
 
+describe('a past day as Today draws it', () => {
+  const day = (n: number, hhmm: string) => cairo(n, hhmm)
+  const rows = [
+    task('goal', { status: 'done', completed_at: day(25, '11:00'), top3_rank: 1 }),
+    task('second', { status: 'done', completed_at: day(25, '16:20'), top3_rank: 2 }),
+    task('slipped', { due_at: day(25, '09:00'), top3: true, top3_rank: 3 }),
+    task('extra', { status: 'done', completed_at: day(25, '09:15') }),
+    task('left', { due_at: day(25, '09:00') }),
+    task('other-day', { status: 'done', completed_at: day(24, '09:00'), top3_rank: 1 }),
+  ]
+  it('picks in rank order (done ones and the slipped one), the rest split into also done and left open', () => {
+    const p = pastPlan(rows, '2026-10-25', CAIRO)
+    expect(p.picks.map((t) => t.id)).toEqual(['goal', 'second', 'slipped'])
+    expect(p.alsoDone.map((t) => t.id)).toEqual(['extra'])
+    expect(p.open.map((t) => t.id)).toEqual(['left'])
+  })
+  it('never more than three picks, and a quiet day has none', () => {
+    const many = [1, 2, 3, 4].map((n) => task(`p${n}`, { status: 'done', completed_at: day(25, '10:00'), top3_rank: n }))
+    expect(pastPlan(many, '2026-10-25', CAIRO).picks).toHaveLength(3)
+    expect(pastPlan([], '2026-10-25', CAIRO)).toEqual({ picks: [], alsoDone: [], open: [] })
+  })
+})
+
 describe('names', () => {
-  it("the header's date in Today's two styles, the year only when it isn't this one", () => {
-    expect(dayHeading('2026-11-03', '2026-10-25', 'long')).toBe('Tuesday, November 3')
-    expect(dayHeading('2026-11-03', '2026-10-25', 'short')).toBe('Tuesday, Nov 3')
-    expect(dayHeading('2027-01-02', '2026-10-25', 'short')).toBe('Saturday, Jan 2, 2027')
+  it('the header: Tomorrow / Yesterday with the date beside it, a far day with how far off', () => {
+    expect(dayTitle('2026-10-26', '2026-10-25', 'short')).toEqual({ title: 'Tomorrow', caption: 'Mon, Oct 26' })
+    expect(dayTitle('2026-10-26', '2026-10-25', 'long')).toEqual({ title: 'Tomorrow', caption: 'Monday, October 26' })
+    expect(dayTitle('2026-10-24', '2026-10-25', 'short')).toEqual({ title: 'Yesterday', caption: 'Sat, Oct 24' })
+    expect(dayTitle('2026-11-03', '2026-10-25', 'short')).toEqual({ title: 'Tue, Nov 3', caption: 'in 9 days' })
+    expect(dayTitle('2026-10-20', '2026-10-25', 'long')).toEqual({ title: 'Tue, Oct 20', caption: '5 days ago' })
+    expect(dayTitle('2027-01-02', '2026-10-25', 'short').title).toBe('Sat, Jan 2, 2027')
   })
   it('neighbours and section words', () => {
     expect(dayName('2026-10-26', '2026-10-25')).toBe('Tomorrow')

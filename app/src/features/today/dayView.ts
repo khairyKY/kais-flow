@@ -55,6 +55,17 @@ export function pastTasks(tasks: readonly Task[], key: string, zone: string = ap
   return { done, open: futureTasks(tasks, key, zone) }
 }
 
+/** A past day as Today's page draws it (other-days look A): its Top 3 (the picks done that day, which keep
+ * `top3_rank`, plus a pick still starred and open: slipped), the rest done, and the rest left open.
+ * ponytail: a star lives on the task, not the day, so a task starred since still reads as that day's slipped pick. */
+export function pastPlan(tasks: readonly Task[], key: string, zone: string = appZone()): { picks: Task[]; alsoDone: Task[]; open: Task[] } {
+  const { done, open } = pastTasks(tasks, key, zone)
+  const rank = (t: Task) => t.top3_rank ?? Infinity
+  const picks = [...done.filter((t) => t.top3_rank != null), ...open.filter((t) => t.top3)].sort((a, b) => rank(a) - rank(b)).slice(0, 3)
+  const ids = new Set(picks.map((t) => t.id))
+  return { picks, alsoDone: done.filter((t) => !ids.has(t.id)), open: open.filter((t) => !ids.has(t.id)) }
+}
+
 /** The day's timed blocks, in start order — what its ribbon and its "On the calendar" list draw. A
  * block crossing midnight shows on both days; all-day ones stay off, as on Today (upNext). */
 export function dayBlocks<E extends Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'> & { deleted_at?: string | null }>(events: readonly E[], key: string, zone: string = appZone()): E[] {
@@ -66,11 +77,20 @@ export function dayBlocks<E extends Pick<CalendarEvent, 'starts_at' | 'ends_at' 
 
 const fmt = (key: string, o: Intl.DateTimeFormatOptions) => new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { ...o, timeZone: 'UTC' })
 
-/** The header's date for `key` in Today's two styles — "Monday, November 3" (desktop) or "Monday,
- * Nov 3" (phone) — with the year when it isn't this one. */
-export function dayHeading(key: string, today: string, month: 'long' | 'short'): string {
-  return fmt(key, { weekday: 'long', month, day: 'numeric', ...(key.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' } : null) })
+/** The header of another day (other-days look A): "Tomorrow" / "Yesterday" with its date beside it, and any
+ * further day as its short date with how far off it is ("Tue, Nov 3 · in 8 days"). `long` spells the
+ * neighbours' date out for the desktop ("Tuesday, October 27"). The year shows when it isn't this one. */
+export function dayTitle(key: string, today: string, style: 'short' | 'long'): { title: string; caption: string } {
+  const year = key.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' as const } : null
+  const off = dayOffset(key, today)
+  if (Math.abs(off) === 1) {
+    const date = style === 'long' ? { weekday: 'long' as const, month: 'long' as const } : { weekday: 'short' as const, month: 'short' as const }
+    return { title: off === 1 ? 'Tomorrow' : 'Yesterday', caption: fmt(key, { ...date, day: 'numeric', ...year }) }
+  }
+  return { title: fmt(key, { weekday: 'short', month: 'short', day: 'numeric', ...year }), caption: off > 0 ? `in ${off} days` : `${-off} days ago` }
 }
+
+const dayOffset = (key: string, today: string) => Math.round((Date.parse(key) - Date.parse(today)) / 86_400_000)
 
 /** "Tomorrow" / "Yesterday", else "Mon, Nov 3" — the phone strip's neighbours and the section names. */
 export function dayName(key: string, today: string): string {
@@ -81,7 +101,7 @@ export function dayName(key: string, today: string): string {
 
 /** "Tomorrow" / "Monday" within a week either way, else "The day" — "Monday's three", "The day's tasks". */
 export function dayWord(key: string, today: string): string {
-  const off = Math.round((Date.parse(key) - Date.parse(today)) / 86_400_000)
+  const off = dayOffset(key, today)
   if (off === 1) return 'Tomorrow'
   if (off === -1) return 'Yesterday'
   return Math.abs(off) < 7 ? fmt(key, { weekday: 'long' }) : 'The day'
