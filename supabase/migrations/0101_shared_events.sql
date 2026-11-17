@@ -78,11 +78,9 @@ begin
   new.shared_id := old.shared_id; new.shared_circle := old.shared_circle; new.shared_with := old.shared_with;
   new.share_status := old.share_status; new.share_peer_status := old.share_peer_status; new.share_edited_by := old.share_edited_by;
   if old.shared_id is null then return new; end if;
-  -- A plain delete of my copy is "Remove from mine" (or "Decline"): the other copy hears it, mine becomes a plain event in Trash.
+  -- A plain delete of my copy is "Remove from mine" (or "Decline"): mine becomes a plain event in Trash (the other copy hears it in
+  -- share_cal_sync, an AFTER trigger: a BEFORE one can't touch a row the same statement is changing).
   if old.deleted_at is null and new.deleted_at is not null then
-    perform share_ctx_set(true);
-    update calendar_events s set share_peer_status = 'declined' where s.shared_id = old.shared_id and s.id <> old.id and s.user_id <> old.user_id;
-    perform share_ctx_set(false);
     new.shared_id := null; new.shared_circle := null; new.shared_with := null;
     new.share_status := null; new.share_peer_status := null; new.share_edited_by := null;
     return new;
@@ -102,7 +100,13 @@ create trigger calendar_events_share_guard before insert or update on calendar_e
 create or replace function share_cal_sync() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare sib calendar_events;
 begin
-  if share_ctx() or new.shared_id is null then return null; end if;
+  if share_ctx() or old.shared_id is null then return null; end if;
+  if new.shared_id is null then -- the guard unlinked it: a plain delete, "Remove from mine" - the other copy reads "can't go"
+    perform share_ctx_set(true);
+    update calendar_events s set share_peer_status = 'declined' where s.shared_id = old.shared_id and s.id <> old.id and s.user_id <> old.user_id;
+    perform share_ctx_set(false);
+    return null;
+  end if;
   if (new.title, new.starts_at, new.ends_at, new.all_day) is not distinct from (old.title, old.starts_at, old.ends_at, old.all_day)
      and not (old.deleted_at is not null and new.deleted_at is null) then return null; end if;
   select * into sib from calendar_events x where x.shared_id = new.shared_id and x.id <> new.id and x.user_id <> new.user_id and x.user_id = new.shared_with limit 1;
@@ -117,20 +121,23 @@ begin
 end $$;
 revoke all on function share_cal_sync() from public, anon, authenticated;
 drop trigger if exists calendar_events_share_sync on calendar_events;
-create trigger calendar_events_share_sync after update on calendar_events for each row when (new.shared_id is not null) execute function share_cal_sync();
+create trigger calendar_events_share_sync after update on calendar_events for each row when (old.shared_id is not null) execute function share_cal_sync();
 
 -- A copy deleted for good while still on the other's calendar: the other copy says so.
-create or replace function share_cal_before_delete() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+-- (AFTER: when both copies go in one statement - an account delete, an admin's cleanup - the other copy is already gone and there is
+-- nothing to update.)
+create or replace function share_cal_after_delete() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
-  if share_ctx() or old.shared_id is null or old.deleted_at is not null then return old; end if;
+  if share_ctx() or old.shared_id is null or old.deleted_at is not null then return null; end if;
   perform share_ctx_set(true);
   update calendar_events s set share_peer_status = 'declined' where s.shared_id = old.shared_id and s.id <> old.id and s.user_id <> old.user_id;
   perform share_ctx_set(false);
-  return old;
+  return null;
 end $$;
-revoke all on function share_cal_before_delete() from public, anon, authenticated;
+revoke all on function share_cal_after_delete() from public, anon, authenticated;
 drop trigger if exists calendar_events_share_before_delete on calendar_events;
-create trigger calendar_events_share_before_delete before delete on calendar_events for each row when (old.shared_id is not null) execute function share_cal_before_delete();
+drop trigger if exists calendar_events_share_after_delete on calendar_events;
+create trigger calendar_events_share_after_delete after delete on calendar_events for each row when (old.shared_id is not null) execute function share_cal_after_delete();
 
 -- When the circle goes (one of you disconnected, or an account was deleted): each keeps a plain copy of their own.
 -- A proposal nobody answered was never on the invited person's calendar for real, so that copy goes.

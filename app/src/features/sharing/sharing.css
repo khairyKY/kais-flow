@@ -139,3 +139,14 @@
 .pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .pc-lane:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .sh-chip.is-compact { width: 40px; padding: 0; justify-content: center; }
+
+/* ── shared events (P2): Free together, Propose, and the shared look on the grid ── */
+.sh-input { display: block; width: 100%; min-height: 44px; padding: 0 12px; border-radius: var(--radius-input); border: 1px solid var(--line-control); background: var(--paper-bone); color: var(--ink-body); font: inherit; font-size: 16px; /* ds-ok: 16px keeps iOS from zooming the page on focus */ }
+.sh-input:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-two { display: flex; gap: 10px; }
+.sh-two > * { flex: 1; min-width: 0; }
+
+/* A shared event: both of you are on it. Dashed (her colour's edge) until it is answered; a small face of the other person beside the title. */
+.fc .fc-event.kf-shared-pending, .pc-block.is-shared-pending { border-style: dashed; border-color: color-mix(in srgb, var(--blk-heather) 75%, transparent); }
+.fc .fc-event.kf-shared-declined, .pc-block.is-shared-declined { opacity: 0.7; }
+.sh-face { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-right: 4px; border-radius: 50%; vertical-align: -2px; font: 600 var(--fs-mono-s) / 1 var(--font-ui); background: color-mix(in srgb, var(--blk-heather) 30%, var(--paper-parchment)); border: 1px solid color-mix(in srgb, var(--blk-heather) 65%, transparent); color: var(--blk-heather-ink); }

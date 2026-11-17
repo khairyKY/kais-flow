@@ -10,8 +10,9 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 import { rangeOf, spansDays } from './rangeEdit'
+import { sharedLine, sharedState } from '../sharing/sharedPure'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen' | 'ends' | 'allday' | 'private'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen' | 'ends' | 'allday' | 'private' | 'shared' | 'accept' | 'decline' | 'removemine' | 'deleteboth'
 
 /** cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens a block's DETAILS (when, project,
  * repeat, remind…); a right-click opens MENU B (the swatch tray, Duplicate, Work with AI ›, Copy link, Delete). */
@@ -45,6 +46,8 @@ export interface BlockMenuContext {
   now?: Date
   /** Which list: the details a click opens (default) or menu B a right-click opens. */
   mode?: BlockMenuMode
+  /** A shared event (migration 0101): the other person's name, for the line that says where it stands. */
+  sharedName?: string
 }
 
 /** The popover's width: menu B's 272 (cal-blocks — the swatch tray's 8 columns fit; §5 drew 238). */
@@ -181,7 +184,9 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   // F7: an event's date row is Starts, with an Ends row (a date, and a time unless all-day) and an All day switch beside the
   // Time row; a task's block is one day and keeps its single Date row.
   const plain = !e.task_id
+  const shared = isShared(e)
   const out: BlockMenuEntry[] = [
+    ...(shared ? sharedHead(e, ctx) : []),
     { key: 'date', label: plain ? startsLabel(e) : blockDate(e), hint: plain ? 'Starts' : undefined, sub: true },
     ...(plain ? [{ key: 'ends' as const, label: endsLabel(e), hint: 'Ends', sub: true }] : []),
     ...(e.all_day && plain
@@ -193,10 +198,10 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
           : [{ key: 'time' as const, label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true }]),
     ...(plain ? [{ key: 'allday' as const, label: 'All day', on: e.all_day }] : []),
     { key: 'project', label: ctx.placeName ?? 'No project or area', unset: !ctx.placeName, sub: true },
-    privateRow(e, ctx),
+    ...(shared ? [] : [privateRow(e, ctx)]),
   ]
   // A task block repeats through its task's own rule, never on the calendar.
-  if (!e.task_id) out.push({ key: 'repeat', label: repeatLabel(e.recurrence_rule), unset: !e.recurrence_rule, sub: true })
+  if (!e.task_id && !shared) out.push({ key: 'repeat', label: repeatLabel(e.recurrence_rule), unset: !e.recurrence_rule, sub: true })
   // A12: an event reminds N minutes before each start. A task block reminds through its task; an
   // all-day block has no start time to count back from.
   if (!e.task_id && !e.all_day) out.push({ key: 'remind', label: remindLabel(e.remind_min), unset: e.remind_min == null, sub: true })
@@ -214,8 +219,31 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     if (!repeating) out.push({ key: 'link', label: 'Link a task…', divider: true })
     out.push({ key: 'more', label: 'More', sub: true, divider: repeating })
   }
-  out.push(deleteRow(e, ctx, repeating))
+  out.push(...(shared ? sharedTail(e) : [deleteRow(e, ctx, repeating)]))
   return out
+}
+
+/** A shared event (both of you are on it, 0101): a line that says where it stands, Accept when it is a proposal to me.
+ * Private doesn't apply to one (both of you are on it), and it doesn't repeat. */
+export const isShared = (e: Pick<CalendarEvent, 'shared_id' | 'task_id' | 'source'>): boolean => !!e.shared_id && !e.task_id && e.source === 'native'
+
+function sharedHead(e: CalendarEvent, ctx: BlockMenuContext): BlockMenuEntry[] {
+  const s = sharedState(e)
+  if (!s) return []
+  return [
+    { key: 'shared', label: sharedLine(s, ctx.sharedName ?? 'Them') },
+    ...(s === 'invited' ? [{ key: 'accept' as const, label: 'Accept' }] : []),
+  ]
+}
+
+/** The last rows of a shared event: a proposal I haven't answered is Declined; otherwise Remove from mine (only my calendar) and,
+ * last (it is the one the phone's footer shows, and it asks first), Delete for both. */
+function sharedTail(e: CalendarEvent): BlockMenuEntry[] {
+  if (sharedState(e) === 'invited') return [{ key: 'decline', label: 'Decline', destructive: true, divider: true }]
+  return [
+    { key: 'removemine', label: 'Remove from mine', divider: true },
+    { key: 'deleteboth', label: 'Delete for both', destructive: true },
+  ]
 }
 
 /** The Private switch (sharing, v1.6.6): on a task's block it is the task's own flag. A Private item is a Busy block to the people you share with. */
@@ -258,6 +286,7 @@ function menuB(e: CalendarEvent, ctx: BlockMenuContext, extras: BlockMenuEntry[]
     )
     if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' })
   } else out.push(details)
+  if (isShared(e)) out.push(...sharedHead(e, ctx).filter((r) => r.key === 'accept'))
   // Focus D3: "▶ Focus on this" — a Time block or an open task's block lands on Focus, split into rounds.
   if (!e.all_day && (e.type === 'time_block' || (e.task_id && ctx.task && ctx.task.status !== 'done'))) out.push({ key: 'focus', label: '▶ Focus on this' })
   // Kai 2026-10-17: a copy at the same time (side by side) — an event, or a task's copy blocked at this time;
@@ -265,6 +294,6 @@ function menuB(e: CalendarEvent, ctx: BlockMenuContext, extras: BlockMenuEntry[]
   if (e.task_id ? !!ctx.task : e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D', divider: true })
   out.push(...extras.map((x, i) => (i === 0 && !out.at(-1)?.divider ? { ...x, divider: true } : x)))
   if (e.task_id) out.push({ key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
-  out.push(deleteRow(e, ctx, isRepeatingBlock(e)))
+  out.push(...(isShared(e) ? sharedTail(e) : [deleteRow(e, ctx, isRepeatingBlock(e))]))
   return out
 }

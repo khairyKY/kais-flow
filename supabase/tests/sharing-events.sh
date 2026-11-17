@@ -60,7 +60,7 @@ new_user() { # email -> JSON session
 # api METHOD JWT PATH [JSON] -> CODE and BODY
 api() {
   local out
-  out=$(curl -sS -w '\n%{http_code}' -X "$1" "$API_URL$3" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $2" -H 'Content-Type: application/json' -H 'Prefer: return=representation' ${4:+--data "$4"})
+  out=$(curl -sS -w '\n%{http_code}' -X "$1" "$API_URL$3" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $2" -H 'Content-Type: application/json' -H "Prefer: ${PREFER:-return=representation}" ${4:+--data "$4"})
   CODE=${out##*$'\n'}; BODY=${out%$'\n'*}
 }
 rpc() { local b=${3:-'{}'}; api POST "$1" "/rest/v1/rpc/$2" "$b"; }  # JWT fn [json]
@@ -228,7 +228,7 @@ api POST "$A_JWT" "/rest/v1/calendar_events" "{\"title\":\"ZZFORGED\",\"starts_a
 expect "…or on an insert (a forged copy is a plain event)" "1  " "$(ev "title = 'ZZFORGED'" "count(*)") $(ev "title = 'ZZFORGED'" "coalesce(shared_id::text, '')") $(ev "title = 'ZZFORGED'" "coalesce(shared_with::text, '')")"
 expect "…and the real event still has exactly two copies" "2" "$(ev "shared_id = '$SID'" 'count(*)')"
 FORGED=$(ev "title = 'ZZFORGED'" id)
-api POST "$A_JWT" "/rest/v1/calendar_events?on_conflict=id" "{\"id\":\"$EV_A\",\"title\":\"ZZDATE four\",\"starts_at\":\"$(d 4 19:00)\",\"ends_at\":\"$(d 4 21:00)\",\"shared_id\":null,\"share_status\":null}"
+PREFER='resolution=merge-duplicates,return=representation' api POST "$A_JWT" "/rest/v1/calendar_events?on_conflict=id" "{\"id\":\"$EV_A\",\"title\":\"ZZDATE four\",\"starts_at\":\"$(d 4 19:00)\",\"ends_at\":\"$(d 4 21:00)\",\"shared_id\":null,\"share_status\":null}"
 expect "an upsert that carries empty link columns doesn't unlink it (the outbox writes whole rows)" "$SID ZZDATE four" "$(ev "id = '$EV_A'" "shared_id || ' ' || title")"
 expect "…and the edit reached B" "ZZDATE four" "$(ev "id = '$EV_B'" title)"
 
