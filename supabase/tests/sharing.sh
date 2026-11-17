@@ -11,6 +11,9 @@
 #   never shared     journal, people, interactions, the AI's tables: the RPCs can't reach them (function bodies read only
 #                    calendar_events / tasks / app_settings's name and zone), the tables are closed to B, and the AI
 #                    functions (chat, mcp) never call a sharing function
+#   switches, colour (0105) the two switches (her lane on my calendar / her day on Today) move one at a time, per viewer, and change nothing the
+#                    server lets anyone see; her colour is one of palette C's 16, per viewer, unreadable and unwritable by the other side
+#   pause, no end    paused_until = infinity stays paused until someone resumes it; a resume restores both sides; an hour still ends by itself
 #   rules            the lower of the two levels both ways, a pause cuts both ways at once, a leave wipes everything
 #                    (and tells the other side through share_pings), a third user sees nothing, grants can't be forged,
 #                    deleting an account ends its connections
@@ -193,7 +196,7 @@ rpc "$B_JWT" share_invite_accept "{\"p_code\":\"$CODE_A\"}"
 expect "a used code fails, and says what a wrong one says" "false bad_code" "$(jqe '[.ok, .error] | map(tostring) | join(" ")')"
 rpc "$C_JWT" share_invite_peek "{\"p_code\":\"$CODE_A\"}"
 expect "…for a third person too" "false bad_code" "$(jqe '[.ok, .error] | map(tostring) | join(" ")')"
-expect "one circle, two members, two grants; Partner = Details both ways, the lane on" "1 2 2 details details t" "$(sql -c "select concat_ws(' ', (select count(*) from circles), (select count(*) from circle_members), (select count(*) from share_grants), (select string_agg(level, ' ') from share_grants), (select bool_and(show_lane) from circle_members))" | sed 's/details details/details details/')"
+expect "one circle, two members, two grants; Partner = Details both ways, both switches on, Heather" "1 2 2 details details t t #8972B3" "$(sql -c "select concat_ws(' ', (select count(*) from circles), (select count(*) from circle_members), (select count(*) from share_grants), (select string_agg(level, ' ') from share_grants), (select bool_and(show_lane) from circle_members), (select bool_and(show_day) from circle_members), (select string_agg(distinct color, ',') from circle_members))")"
 
 # an expired code, a cancelled code, wrong tries
 rpc "$A_JWT" share_invite_create '{"p_relation":"family"}'; CODE_X=$(jqe .code)
@@ -290,7 +293,7 @@ for t in circles circle_members share_grants share_pings share_invites share_lin
 done
 rpc "$C_JWT" share_connections; expect "C has no connections" "[]" "$BODY"
 rpc "$B_JWT" share_connections
-expect "B's connection: the partner's name, both levels, the lane on, not paused" "Kai details details true null" "$(jqe '.[0] | [.partner_name, .my_level, .their_level, (.show_lane|tostring), (.paused_until|tostring)] | join(" ")')"
+expect "B's connection: the partner's name, both levels, both switches on, Heather, not paused" "Kai details details true true #8972B3 null" "$(jqe '.[0] | [.partner_name, .my_level, .their_level, (.show_lane|tostring), (.show_day|tostring), .color, (.paused_until|tostring)] | join(" ")')"
 
 # ---------------------------------------------------------------------------------------------
 section "pings: the narrow Realtime signal"
@@ -325,6 +328,74 @@ api PATCH "$B_JWT" "/rest/v1/circles?id=eq.$CIRCLE" '{"created_by":"'"$B_ID"'"}'
 expect "a circle's owner column is not writable" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
 api PATCH "$C_JWT" "/rest/v1/circles?id=eq.$CIRCLE" '{"paused_until":null}'
 expect "C can't touch it" "[]" "$BODY"
+
+# ---------------------------------------------------------------------------------------------
+section "pause with no end: stays paused until it is resumed (0105)"
+sql -c "delete from share_pings" >/dev/null
+api PATCH "$A_JWT" "/rest/v1/circles?id=eq.$CIRCLE" '{"paused_until":"infinity"}'
+expect "A pauses with no end ('until I turn it back on')" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE $BODY)")"
+day "$B_JWT" "$A_ID"; expect "B sees nothing of A, and is told it is a pause" "null true" "$(jqe '[(.level|tostring), ((.paused_until != null)|tostring)] | join(" ")')"
+day "$A_JWT" "$B_ID"; expect "A sees nothing of B either" "null" "$(jqe '.level | tostring')"
+rpc "$B_JWT" share_connections; expect "the connection reads 'infinity': no end date, and B did not pause it" "infinity false" "$(jqe '.[0] | [.paused_until, (.paused_by_me|tostring)] | join(" ")')"
+rpc "$A_JWT" share_connections; expect "…and A did" "infinity true" "$(jqe '.[0] | [.paused_until, (.paused_by_me|tostring)] | join(" ")')"
+expect "no end: the pause is later than any date" "true" "$(sql -c "select (paused_until > now() + interval '100 years')::text from circles where id = '$CIRCLE'")"
+sleep 2
+day "$B_JWT" "$A_ID"; expect "still paused a moment later (nothing ends it by itself)" "null" "$(jqe '.level | tostring')"
+sql -c "delete from share_pings" >/dev/null
+sql -c "update tasks set title = 'T3GOAL' where id = 'a0000000-0000-0000-0000-000000000001'" >/dev/null
+expect "while paused with no end, A's writes ping nobody" "0" "$(sql -c "select count(*) from share_pings")"
+api PATCH "$B_JWT" "/rest/v1/circles?id=eq.$CIRCLE" '{"paused_until":null}'
+expect "either side can resume it (B)" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE)")"
+day "$B_JWT" "$A_ID"; expect "resumed: B sees A again, at the same level" "details" "$(jqe .level)"
+day "$A_JWT" "$B_ID"; expect "…and A sees B again" "details" "$(jqe .level)"
+rpc "$A_JWT" share_connections; expect "the connection is no longer paused" "null false" "$(jqe '.[0] | [(.paused_until|tostring), (.paused_by_me|tostring)] | join(" ")')"
+# a timed pause is the secondary choice and still ends by itself (the section above); an hour is not 'forever'
+api PATCH "$A_JWT" "/rest/v1/circles?id=eq.$CIRCLE" "{\"paused_until\":\"$(date -u -d '+1 hour' +%Y-%m-%dT%H:%M:%SZ)\"}"
+rpc "$B_JWT" share_connections; expect "a timed pause carries its end (not infinity)" "true" "$(jqe '.[0] | ((.paused_until != "infinity" and .paused_until != null)|tostring)')"
+api PATCH "$A_JWT" "/rest/v1/circles?id=eq.$CIRCLE" '{"paused_until":null}'
+
+# ---------------------------------------------------------------------------------------------
+section "two switches and her colour are the viewer's own (0105)"
+rpc "$B_JWT" share_connections
+expect "B's defaults for a Partner: lane on, Today card on, Heather" "true true #8972B3" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring), .color] | join(" ")')"
+sql -c "delete from share_pings" >/dev/null
+api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_lane":false}'
+expect "B switches OFF 'her lane on my calendar'" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE $BODY)")"
+rpc "$B_JWT" share_connections; expect "only the lane switch moved: the Today card is still on" "false true" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
+api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_day":false}'
+rpc "$B_JWT" share_connections; expect "'her day on Today' off too: both off, each by its own switch" "false false" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
+api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_lane":true}'
+rpc "$B_JWT" share_connections; expect "the lane back on leaves the card off" "true false" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
+day "$B_JWT" "$A_ID"; expect "neither switch changes what the server lets B see (a switch is a view, not a grant)" "details" "$(jqe .level)"
+rpc "$A_JWT" share_connections; expect "A's own switches are untouched by B's (on, on)" "true true" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
+api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_day":true}'
+# a colour: one of the 16, per viewer
+api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#E58F99"}'
+expect "B picks Rose for her" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE $BODY)")"
+rpc "$B_JWT" share_connections; expect "B's connection carries B's pick" "#E58F99" "$(jqe '.[0].color')"
+rpc "$A_JWT" share_connections; expect "A's colour for B is still Heather: B's pick is invisible to A" "#8972B3" "$(jqe '.[0].color')"
+api PATCH "$A_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#4A9266"}'
+rpc "$A_JWT" share_connections; expect "A picks Pine for B: A's own pick" "#4A9266" "$(jqe '.[0].color')"
+rpc "$B_JWT" share_connections; expect "…and B's pick did not move" "#E58F99" "$(jqe '.[0].color')"
+for col in color show_lane show_day; do
+  api GET "$A_JWT" "/rest/v1/circle_members?select=$col"
+  expect "A can't read the $col column of any member row, even their own (the app reads it through share_connections)" "closed" "$(closed)"
+done
+api PATCH "$A_JWT" "/rest/v1/circle_members?user_id=eq.$B_ID" '{"color":"#B36670","show_lane":false,"show_day":false}'
+expect "A can't change B's member row (RLS: nothing matches)" "[]" "$BODY"
+rpc "$B_JWT" share_connections; expect "…B's pick and both switches are as B left them" "#E58F99 true true" "$(jqe '.[0] | [.color, (.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
+api PATCH "$C_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#B36670"}'
+expect "C can't touch a member row of this circle" "[]" "$BODY"
+for bad in '#123456' 'red' '#e58f99' '' '#E58F9'; do
+  api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" "{\"color\":\"$bad\"}"
+  expect "a colour outside palette C's 16 is refused ('$bad')" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
+done
+api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"user_id":"'"$C_ID"'"}'
+expect "a member row's owner column is not writable" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
+rpc "$B_JWT" share_connections; expect "after the refusals B's colour is still Rose" "#E58F99" "$(jqe '.[0].color')"
+expect "a lane, a card or a colour pings nobody (the other side can't see it)" "0" "$(sql -c "select count(*) from share_pings")"
+# put it back for the rest of the run
+sql -c "update circle_members set color = '#8972B3' where circle_id = '$CIRCLE'" >/dev/null
 
 # ---------------------------------------------------------------------------------------------
 section "never shared: journal, health, people, AI chat"
@@ -413,9 +484,13 @@ rpc "$B_JWT" share_connections; expect "B's connections: empty" "[]" "$BODY"
 view "$L_TITLES"; expect "a view link is not a connection: it still works" "200" "$CODE"
 
 section "connecting again, and account deletion"
+rpc "$A_JWT" share_invite_create '{"p_relation":"family"}'; CODE_F=$(jqe .code)
+rpc "$B_JWT" share_invite_accept "{\"p_code\":\"$CODE_F\"}"
+expect "Family: Titles, both switches off, Heather" "true titles false false #8972B3" "$(echo "$(jqe '.ok|tostring') $(sql -c "select level from share_grants where owner_id = '$A_ID'") $(sql -c "select concat_ws(' ', bool_or(show_lane)::text, bool_or(show_day)::text, string_agg(distinct color, ',')) from circle_members")")"
+sql -c "delete from circles" >/dev/null
 rpc "$A_JWT" share_invite_create '{"p_relation":"friend"}'; CODE_N=$(jqe .code)
 rpc "$C_JWT" share_invite_accept "{\"p_code\":\"$CODE_N\",\"p_level\":\"busy\"}"
-expect "Friend: accepter starts at Busy, the lane is off" "true busy busy false" "$(echo "$(jqe '.ok|tostring') $(sql -c "select string_agg(level, ' ' order by owner_id = '$C_ID') from share_grants") $(sql -c "select bool_or(show_lane)::text from circle_members")")"
+expect "Friend: accepter starts at Busy, both switches (lane, Today card) are off, Heather" "true busy busy false false #8972B3" "$(echo "$(jqe '.ok|tostring') $(sql -c "select string_agg(level, ' ' order by owner_id = '$C_ID') from share_grants") $(sql -c "select concat_ws(' ', bool_or(show_lane)::text, bool_or(show_day)::text, string_agg(distinct color, ',')) from circle_members")")"
 rpc "$A_JWT" share_invite_create '{"p_relation":"friend"}'; CODE_M=$(jqe .code)
 rpc "$C_JWT" share_invite_accept "{\"p_code\":\"$CODE_M\"}"
 expect "the same two people can't connect twice" "false already_connected" "$(jqe '[.ok, .error] | map(tostring) | join(" ")')"
