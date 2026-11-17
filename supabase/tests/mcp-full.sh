@@ -260,7 +260,9 @@ refused "B's person is out of reach even with the scope" "$KA" save_person '{id:
 export JB; JB=$(sql -c "select id from journal_entries where user_id = '$B_ID'")
 refused "B's journal entry is out of reach even with the scope" "$KA" save_journal_entry '{id: env.JB, body: "taken"}' "No journal entry"
 call "shut_down with a line (journal scope)" "$KA" shut_down '{line: "zebrafoxtrot good day"}'
-expect "the line is a journal entry on the loop day" "$LOOPDAY" "$(sql -c "select entry_date from journal_entries where user_id = '$A_ID' and body = 'zebrafoxtrot good day'")"
+expect "the line is in the loop day's journal entry, under Shut down" "$LOOPDAY" "$(sql -c "select entry_date from journal_entries where user_id = '$A_ID' and body like '%zebrafoxtrot good day%'")"
+call "shut_down again, a new line (journal scope)" "$KA" shut_down '{line: "zebrafoxtrot better day"}'
+expect "the same block is edited, not a second entry" "1 0" "$(sql -c "select count(*) || ' ' || count(*) filter (where body like '%zebrafoxtrot good day%') from journal_entries where user_id = '$A_ID' and body like '%zebrafoxtrot%'")"
 expect "logged: line + the ritual" "1 1" "$(sql -c "select (select count(*) from activity_log where user_id = '$A_ID' and event_type = 'journal.line_added' and payload->>'date' = '$LOOPDAY') || ' ' || (select count(*) from activity_log where user_id = '$A_ID' and event_type = 'ritual.finished' and payload->>'ritual' = 'evening' and payload->>'date' = '$LOOPDAY')")"
 
 section "privacy gate: switched off again"
