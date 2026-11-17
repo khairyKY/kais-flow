@@ -80,12 +80,17 @@
     "detail": ""
   },
   {
-    "name": "Pause for today ends tomorrow 8:00 on my clock (06:00Z)",
+    "name": "Pause is offered as \"until I turn it back on\" first, an hour second, and nothing says \"today\"",
     "ok": true,
-    "detail": "{\"paused_until\":\"2026-11-19T06:00:00.000Z\"}"
+    "detail": "Pause sharing | Pause until I turn it back on | Pause for an hour"
   },
   {
-    "name": "the page says it is paused and offers Resume",
+    "name": "Pause until I turn it back on has NO end: paused_until is infinity",
+    "ok": true,
+    "detail": "{\"paused_until\":\"infinity\"}"
+  },
+  {
+    "name": "the page says it is paused with no end and offers Resume",
     "ok": true,
     "detail": ""
   },
@@ -95,7 +100,37 @@
     "detail": ""
   },
   {
-    "name": "Show on my calendar writes my member row",
+    "name": "Pause for an hour (the timed one) still ends: an hour from now, not infinity",
+    "ok": true,
+    "detail": "{\"paused_until\":\"2026-11-18T11:09:06.209Z\"}"
+  },
+  {
+    "name": "\"Show her lane on my calendar\" writes show_lane ONLY",
+    "ok": true,
+    "detail": "[{\"show_lane\":false}]"
+  },
+  {
+    "name": "…and the other switch stays on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "\"Show her day on Today\" writes show_day ONLY",
+    "ok": true,
+    "detail": "[{\"show_day\":false}]"
+  },
+  {
+    "name": "her colour: palette C's 16 swatches, Heather ticked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "picking Rose writes color #E58F99 ONLY, to member rows of this circle (RLS keeps it to mine)",
+    "ok": true,
+    "detail": "[[\"?circle_id=eq.c1000000-0000-4000-8000-000000000001\",{\"color\":\"#E58F99\"}]]"
+  },
+  {
+    "name": "…Rose is now the ticked one, and the avatar draws in it",
     "ok": true,
     "detail": ""
   },
@@ -126,6 +161,16 @@
   },
   {
     "name": "[details] her Top 3 with the goal, a done one, and today’s tasks with notes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "her card’s pause menu: until I turn it back on first, an hour second, no \"today\"",
+    "ok": true,
+    "detail": "Pause sharing with Reem | Pause until I turn it back on | Pause for an hour"
+  },
+  {
+    "name": "...picking it from the card writes infinity",
     "ok": true,
     "detail": ""
   },
@@ -165,9 +210,84 @@
     "detail": ""
   },
   {
-    "name": "a paused connection is one quiet line: who, paused, when she is back",
+    "name": "a timed pause is one quiet line: who, paused, when she is back",
     "ok": true,
     "detail": "Reem’s day | R | Reem · paused | Back tomorrow at 8:00 AM | Open"
+  },
+  {
+    "name": "a pause with no end says so: paused, until turned back on, never a time",
+    "ok": true,
+    "detail": "Reem’s day | R | Reem · paused | Until turned back on | Open"
+  },
+  {
+    "name": "Today card OFF (lane on): no Her day card on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...but her lane is still on the calendar (the lane switch is its own)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Lane OFF (card on): no lane on the calendar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...but her card is still on Today (the Today switch is its own)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: lane OFF means no lane bar on the day either",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a Family connection with both switches off: no card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...and switching only the Today card on shows the card, lane still off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "default colour: the card draws in Heather",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "picked Rose: the card carries Rose (--her = the Rose token)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and the block edge really is a different colour from Heather",
+    "ok": true,
+    "detail": "color(srgb 0.537255 0.447059 0.701961 / 0.7) -> color(srgb 0.898039 0.560784 0.6 / 0.7)"
+  },
+  {
+    "name": "desktop lane in the picked colour (Pine)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and the lane chip avatar too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...and its drawn colour is not Heather’s",
+    "ok": true,
+    "detail": "color(srgb 0.463726 0.670588 0.528431)"
+  },
+  {
+    "name": "phone lane in the picked colour too",
+    "ok": true,
+    "detail": ""
   },
   {
     "name": "no connection: no card",
@@ -190,12 +310,27 @@
     "detail": ""
   },
   {
-    "name": "the avatar chip is on for a Partner",
+    "name": "the avatar chip is the lane switch, on for a Partner",
     "ok": true,
     "detail": ""
   },
   {
-    "name": "a tap turns the lane off (my member row)",
+    "name": "the lane menu offers Pause until I turn it back on, then an hour, and no \"today\"",
+    "ok": true,
+    "detail": "Hide Reem’s lane | Pause until I turn it back on | Pause for an hour | Sharing settings"
+  },
+  {
+    "name": "...and it writes infinity (no end)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "while paused the menu says Resume instead",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a tap turns the lane off (my member row, show_lane only)",
     "ok": true,
     "detail": ""
   },
@@ -210,7 +345,7 @@
     "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Dentist\",\"starts_"
   },
   {
-    "name": "phone day: her lane is a thin Heather bar at the column’s edge",
+    "name": "phone day: her lane is a thin bar at the column’s edge (Heather until picked)",
     "ok": true,
     "detail": "lane blocks 4"
   },

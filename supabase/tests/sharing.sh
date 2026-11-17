@@ -92,6 +92,16 @@ api() {
   out=$(curl -sS -w '\n%{http_code}' -X "$1" "$API_URL$3" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $2" -H 'Content-Type: application/json' -H 'Prefer: return=representation' ${4:+--data "$4"})
   CODE=${out##*$'\n'}; BODY=${out%$'\n'*}
 }
+# apim: as api, but Prefer return=minimal. A write to circle_members must not ask for the row back (the app never does): the row's
+# columns beyond id / circle_id / user_id are not selectable by anyone (that is the point), so return=representation is a 403.
+apim() {
+  local out
+  out=$(curl -sS -w '
+%{http_code}' -X "$1" "$API_URL$3" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $2" -H 'Content-Type: application/json' -H 'Prefer: return=minimal' ${4:+--data "$4"})
+  CODE=${out##*$'
+'}; BODY=${out%$'
+'*}
+}
 rpc() { local b=${3:-'{}'}; api POST "$1" "/rest/v1/rpc/$2" "$b"; }  # JWT fn [json]
 day() { rpc "$1" shared_day "{\"p_owner\":\"$2\",\"p_from\":\"$(date -u -d '-1 day' +%Y-%m-%dT%H:%M:%SZ)\",\"p_to\":\"$(date -u -d '+2 days' +%Y-%m-%dT%H:%M:%SZ)\"}"; }
 closed() { if [ "$BODY" = "[]" ] || [ "$CODE" = 401 ] || [ "$CODE" = 403 ] || [ "$CODE" = 404 ]; then echo closed; else echo "open($CODE $BODY)"; fi; }  # nothing came back, or the API refused
@@ -348,7 +358,7 @@ api PATCH "$B_JWT" "/rest/v1/circles?id=eq.$CIRCLE" '{"paused_until":null}'
 expect "either side can resume it (B)" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE)")"
 day "$B_JWT" "$A_ID"; expect "resumed: B sees A again, at the same level" "details" "$(jqe .level)"
 day "$A_JWT" "$B_ID"; expect "…and A sees B again" "details" "$(jqe .level)"
-rpc "$A_JWT" share_connections; expect "the connection is no longer paused" "null false" "$(jqe '.[0] | [(.paused_until|tostring), (.paused_by_me|tostring)] | join(" ")')"
+rpc "$A_JWT" share_connections; expect "the connection is no longer paused" "null null" "$(jqe '.[0] | [(.paused_until|tostring), (.paused_by_me|tostring)] | join(" ")')"
 # a timed pause is the secondary choice and still ends by itself (the section above); an hour is not 'forever'
 api PATCH "$A_JWT" "/rest/v1/circles?id=eq.$CIRCLE" "{\"paused_until\":\"$(date -u -d '+1 hour' +%Y-%m-%dT%H:%M:%SZ)\"}"
 rpc "$B_JWT" share_connections; expect "a timed pause carries its end (not infinity)" "true" "$(jqe '.[0] | ((.paused_until != "infinity" and .paused_until != null)|tostring)')"
@@ -359,38 +369,38 @@ section "two switches and her colour are the viewer's own (0105)"
 rpc "$B_JWT" share_connections
 expect "B's defaults for a Partner: lane on, Today card on, Heather" "true true #8972B3" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring), .color] | join(" ")')"
 sql -c "delete from share_pings" >/dev/null
-api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_lane":false}'
-expect "B switches OFF 'her lane on my calendar'" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE $BODY)")"
+apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_lane":false}'
+expect "B switches OFF 'her lane on my calendar'" "true" "$([ "$CODE" = 204 ] && echo true || echo "false($CODE $BODY)")"
 rpc "$B_JWT" share_connections; expect "only the lane switch moved: the Today card is still on" "false true" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
-api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_day":false}'
+apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_day":false}'
 rpc "$B_JWT" share_connections; expect "'her day on Today' off too: both off, each by its own switch" "false false" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
-api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_lane":true}'
+apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_lane":true}'
 rpc "$B_JWT" share_connections; expect "the lane back on leaves the card off" "true false" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
 day "$B_JWT" "$A_ID"; expect "neither switch changes what the server lets B see (a switch is a view, not a grant)" "details" "$(jqe .level)"
 rpc "$A_JWT" share_connections; expect "A's own switches are untouched by B's (on, on)" "true true" "$(jqe '.[0] | [(.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
-api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_day":true}'
+apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"show_day":true}'
 # a colour: one of the 16, per viewer
-api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#E58F99"}'
-expect "B picks Rose for her" "true" "$([ "$CODE" = 200 ] && echo true || echo "false($CODE $BODY)")"
+apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#E58F99"}'
+expect "B picks Rose for her" "true" "$([ "$CODE" = 204 ] && echo true || echo "false($CODE $BODY)")"
 rpc "$B_JWT" share_connections; expect "B's connection carries B's pick" "#E58F99" "$(jqe '.[0].color')"
 rpc "$A_JWT" share_connections; expect "A's colour for B is still Heather: B's pick is invisible to A" "#8972B3" "$(jqe '.[0].color')"
-api PATCH "$A_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#4A9266"}'
+apim PATCH "$A_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#4A9266"}'
 rpc "$A_JWT" share_connections; expect "A picks Pine for B: A's own pick" "#4A9266" "$(jqe '.[0].color')"
 rpc "$B_JWT" share_connections; expect "…and B's pick did not move" "#E58F99" "$(jqe '.[0].color')"
 for col in color show_lane show_day; do
   api GET "$A_JWT" "/rest/v1/circle_members?select=$col"
   expect "A can't read the $col column of any member row, even their own (the app reads it through share_connections)" "closed" "$(closed)"
 done
-api PATCH "$A_JWT" "/rest/v1/circle_members?user_id=eq.$B_ID" '{"color":"#B36670","show_lane":false,"show_day":false}'
-expect "A can't change B's member row (RLS: nothing matches)" "[]" "$BODY"
+apim PATCH "$A_JWT" "/rest/v1/circle_members?user_id=eq.$B_ID" '{"color":"#B36670","show_lane":false,"show_day":false}'
+expect "A's write to B's member row matches no row (RLS), and no error that would tell A anything" "204" "$CODE"
 rpc "$B_JWT" share_connections; expect "…B's pick and both switches are as B left them" "#E58F99 true true" "$(jqe '.[0] | [.color, (.show_lane|tostring), (.show_day|tostring)] | join(" ")')"
-api PATCH "$C_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#B36670"}'
-expect "C can't touch a member row of this circle" "[]" "$BODY"
+apim PATCH "$C_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"color":"#B36670"}'
+expect "C's write to a member row of this circle matches no row either" "204" "$CODE"
 for bad in '#123456' 'red' '#e58f99' '' '#E58F9'; do
-  api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" "{\"color\":\"$bad\"}"
+  apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" "{\"color\":\"$bad\"}"
   expect "a colour outside palette C's 16 is refused ('$bad')" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
 done
-api PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"user_id":"'"$C_ID"'"}'
+apim PATCH "$B_JWT" "/rest/v1/circle_members?circle_id=eq.$CIRCLE" '{"user_id":"'"$C_ID"'"}'
 expect "a member row's owner column is not writable" "true" "$([ "$CODE" -ge 400 ] && echo true || echo "false($CODE)")"
 rpc "$B_JWT" share_connections; expect "after the refusals B's colour is still Rose" "#E58F99" "$(jqe '.[0].color')"
 expect "a lane, a card or a colour pings nobody (the other side can't see it)" "0" "$(sql -c "select count(*) from share_pings")"
