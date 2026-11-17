@@ -2,6 +2,7 @@
 // pure so they are tested. The server owns every rule that protects data (masking, the lower level, the pause) -
 // this file only mirrors the ones the app must SAY: what each level shows, what the rule line reads, when a pause ends.
 import { zoneDateKey } from '../../lib/dateShortcuts'
+import { BLOCK_SWATCHES } from '../calendar/blockHue'
 
 export type Level = 'busy' | 'titles' | 'details'
 export type Relation = 'partner' | 'family' | 'friend'
@@ -24,7 +25,7 @@ export const defaultLevel = (r: Relation): Level => (r === 'partner' ? 'details'
 export const laneDefault = (r: Relation): boolean => r === 'partner'
 export const dayDefault = laneDefault
 /** Her colour until you pick another: palette C's Heather (the day hex the server stores). */
-export const HER_COLOR = '#8972B3'
+export const HER_COLOR: string = BLOCK_SWATCHES.find((s) => s.name === 'Heather')!.value
 
 /** You see what you show: both get the lower of the two levels. */
 export const lower = (a: Level, b: Level): Level => (LEVELS.indexOf(a) <= LEVELS.indexOf(b) ? a : b)

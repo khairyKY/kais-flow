@@ -1,4 +1,4 @@
-// v166-sharing (2026-11-17): partner sharing P1 on the real pages against a MOCKED backend (Playwright, Edge/Chromium), desktop 1280x800 and phone 390x844.
+// v166-sharing (2026-11-17, updated 2026-11-18 for v165-sharing-tweaks: two switches, her colour, pause with no end): partner sharing P1 on the real pages against a MOCKED backend (Playwright, Edge/Chromium), desktop 1280x800 and phone 390x844.
 //   node verify.mjs <outDir> [baseUrl=http://localhost:5271] [playwright-core index.mjs] [channel=msedge]
 // The dev server runs in mock mode (app/.env.mock.local: VITE_SUPABASE_URL=http://127.0.0.1:9). Every Supabase request is answered here:
 // REST rows, the sharing RPCs (share_connections, shared_day, share_invite_create / peek / accept) and the `share-view` function, and every
@@ -7,7 +7,8 @@
 //
 // Checks: Settings > Sharing (the person, Invite someone, Enter a code, View links, Never shared) · the invite sheet (8 tiles, the message with
 // code AND link, a new relation = a new code) · enter a code > confirm > Connect · a person's page (the level list with previews, the rule
-// line, the lower level, pause chips, Show on my calendar, Disconnect asks once) · Her day on Today at Details / Titles / Busy · the lane on
+// line, the lower level, pause chips (until I turn it back on / an hour, never "today"), her lane and her Today card as TWO switches that each
+// move only their own surface, her colour (16 swatches, per viewer, drawn on the lane, the card and the avatar), Disconnect asks once) · Her day on Today at Details / Titles / Busy · the lane on
 // the desktop week and the phone day · the lane chip · the Private switch in an event's menu and on a task · the view link's page (and "turned
 // off") · /join/<code> signed out and signed in · no page errors.
 import fs from 'node:fs'
@@ -15,7 +16,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const OUT = process.argv[2]
-const BASE = process.argv[3] ?? 'http://localhost:5271'
+const BASE = process.argv[3] ?? 'http://localhost:5278'
 const PW = process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/openclaw/node_modules/playwright-core/index.mjs'
 const CHANNEL = process.argv[5] ?? 'msedge'
 const { chromium } = await import(pathToFileURL(PW).href)
@@ -56,7 +57,7 @@ const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onb
 
 const connection = (o = {}) => ({
   circle_id: CIRCLE, relation: 'partner', partner_id: PARTNER, partner_name: 'Reem', my_level: 'details', their_level: 'details', level: 'details', my_grant_id: 'd0000000-0000-4000-8000-000000000001',
-  show_lane: true, since: '2026-11-10T08:00:00Z', paused_until: null, paused_by_me: false, ...o,
+  show_lane: true, show_day: true, color: '#8972B3', since: '2026-11-10T08:00:00Z', paused_until: null, paused_by_me: false, ...o,
 })
 /** What the server would answer for Reem's day at a level: the masking is the server's, here only its shape. */
 function sharedDay(level) {
@@ -201,15 +202,38 @@ const allErrors = []
   check('picking a level writes my own grant through the outbox (an upsert with the owner)', lw && /"level":"titles"/.test(JSON.stringify(lw.body)) && JSON.stringify(lw.body).includes(UID), JSON.stringify(lw?.body))
   t = await text(page)
   check('the rule line follows at once', /You show Titles · Reem shows Busy only/.test(t))
-  await click(page, 'For today')
-  const pw = state.writes.find((w) => w.table === 'circles' && w.method === 'PATCH')
-  check('Pause for today ends tomorrow 8:00 on my clock (06:00Z)', pw && /"paused_until":"2026-11-19T06:00:00\.000Z"/.test(JSON.stringify(pw.body)), JSON.stringify(pw?.body))
   t = await text(page)
-  check('the page says it is paused and offers Resume', /Paused/.test(t) && /Back tomorrow at 8:00 AM/.test(t) && /Resume/.test(t))
+  check('Pause is offered as "until I turn it back on" first, an hour second, and nothing says "today"', /Pause until I turn it back on/.test(t) && /Pause for an hour/.test(t) && t.indexOf('Pause until I turn it back on') < t.indexOf('Pause for an hour') && !/for today/i.test(t), t.match(/Pause[^\n]*/g)?.join(' | '))
+  await click(page, 'Pause until I turn it back on')
+  const pw = state.writes.find((w) => w.table === 'circles' && w.method === 'PATCH')
+  check('Pause until I turn it back on has NO end: paused_until is infinity', pw && /"paused_until":"infinity"/.test(JSON.stringify(pw.body)), JSON.stringify(pw?.body))
+  t = await text(page)
+  check('the page says it is paused with no end and offers Resume', /Paused/.test(t) && /Until turned back on/.test(t) && !/Back tomorrow/.test(t) && /Resume/.test(t))
+  await shot(page, 'desktop-person-paused')
   await click(page, 'Resume')
   check('Resume clears it', state.writes.filter((w) => w.table === 'circles' && w.method === 'PATCH').some((w) => /"paused_until":null/.test(JSON.stringify(w.body))))
-  await page.getByRole('switch', { name: /Show Reem on my calendar/ }).click(); await sleep(400)
-  check('Show on my calendar writes my member row', state.writes.some((w) => w.table === 'circle_members' && /"show_lane":false/.test(JSON.stringify(w.body))))
+  await click(page, 'Pause for an hour')
+  const hw = state.writes.filter((w) => w.table === 'circles' && w.method === 'PATCH').at(-1)
+  check('Pause for an hour (the timed one) still ends: an hour from now, not infinity', hw && /"paused_until":"2026-11-18T11:0\d:\d\d\.\d{3}Z"/.test(JSON.stringify(hw.body)), JSON.stringify(hw?.body))
+  await click(page, 'Resume')
+  // two switches: each writes only its own column
+  const before = state.writes.length
+  await page.getByRole('switch', { name: /Show Reem’s lane on my calendar/ }).click(); await sleep(400)
+  const w1 = state.writes.slice(before).filter((w) => w.table === 'circle_members')
+  check('"Show her lane on my calendar" writes show_lane ONLY', w1.length === 1 && /"show_lane":false/.test(JSON.stringify(w1[0].body)) && !/show_day|color/.test(JSON.stringify(w1[0].body)), JSON.stringify(w1.map((w) => w.body)))
+  check('…and the other switch stays on', (await page.getByRole('switch', { name: /Show Reem’s day on Today/ }).getAttribute('aria-checked')) === 'true')
+  const before2 = state.writes.length
+  await page.getByRole('switch', { name: /Show Reem’s day on Today/ }).click(); await sleep(400)
+  const w2 = state.writes.slice(before2).filter((w) => w.table === 'circle_members')
+  check('"Show her day on Today" writes show_day ONLY', w2.length === 1 && /"show_day":false/.test(JSON.stringify(w2[0].body)) && !/show_lane|color/.test(JSON.stringify(w2[0].body)), JSON.stringify(w2.map((w) => w.body)))
+  // her colour: 16 swatches, a pick writes color only, to my own member row
+  const sw = page.getByRole('group', { name: /Reem’s colour/ })
+  check('her colour: palette C\'s 16 swatches, Heather ticked', (await sw.getByRole('button').count()) === 16 && (await sw.getByRole('button', { name: 'Heather' }).getAttribute('aria-pressed')) === 'true')
+  await sw.getByRole('button', { name: 'Rose' }).click(); await sleep(400)
+  const w3 = state.writes.filter((w) => w.table === 'circle_members' && /color/.test(JSON.stringify(w.body)))
+  check('picking Rose writes color #E58F99 ONLY, to member rows of this circle (RLS keeps it to mine)', w3.length === 1 && /"color":"#E58F99"/.test(JSON.stringify(w3[0].body)) && !/show_/.test(JSON.stringify(w3[0].body)) && /circle_id=eq\./.test(w3[0].query), JSON.stringify(w3.map((w) => [w.query, w.body])))
+  check('…Rose is now the ticked one, and the avatar draws in it', (await sw.getByRole('button', { name: 'Rose' }).getAttribute('aria-pressed')) === 'true' && (await page.locator('.sh-head .sh-av').first().evaluate((e) => e.style.getPropertyValue('--her'))) === 'var(--blk-rose)')
+  await shot(page, 'desktop-person-colour')
   await page.getByRole('button', { name: /Disconnect from Reem/ }).first().click(); await sleep(600)
   t = await text(page)
   check('Disconnect asks once, in plain words', /Disconnect from Reem\?/.test(t) && /Nothing is kept/.test(t))
@@ -223,7 +247,7 @@ const allErrors = []
 
 // ── 3. Her day on Today at each level ──
 for (const level of ['details', 'titles', 'busy']) {
-  const { page, errors } = await openPage(browser, { route: '/today', level, connections: [connection({ level, their_level: level })] })
+  const { page, errors, state: cstate } = await openPage(browser, { route: '/today', level, connections: [connection({ level, their_level: level })] })
   const card = page.locator('.sh-day').first()
   const t = await card.innerText().catch(() => '')
   check(`[${level}] Her day card is on Today with the level named`, new RegExp(`Reem’s day`).test(t) && new RegExp(level === 'busy' ? 'Busy only' : level === 'titles' ? 'Titles' : 'Details').test(t), t.replace(/\n/g, ' | ').slice(0, 140))
@@ -231,6 +255,11 @@ for (const level of ['details', 'titles', 'busy']) {
   if (level === 'details') {
     check('[details] her Top 3 with the goal, a done one, and today’s tasks with notes', /Top 3 · 1 of 2 done/.test(t) && /Finish the pharmacology summary/.test(t) && /chapters 4 to 6/.test(t) && /Buy a birthday card/.test(t))
     await shot(page, 'desktop-today-details')
+    await page.getByRole('button', { name: /Pause sharing with Reem/ }).click(); await sleep(300)
+    const ct = await card.innerText()
+    check('her card’s pause menu: until I turn it back on first, an hour second, no "today"', /Pause until I turn it back on/.test(ct) && /Pause for an hour/.test(ct) && ct.indexOf('Pause until I turn it back on') < ct.indexOf('Pause for an hour') && !/for today/i.test(ct), ct.match(/Pause[^\n]*/g)?.join(' | '))
+    await page.getByRole('button', { name: 'Pause until I turn it back on' }).click(); await sleep(500)
+    check('...picking it from the card writes infinity', cstate.writes.some((w) => w.table === 'circles' && /"paused_until":"infinity"/.test(JSON.stringify(w.body))))
   } else {
     check(`[${level}] no Top 3 and no tasks`, !/Top 3|birthday card|pharmacology summary/.test(t))
   }
@@ -241,8 +270,67 @@ for (const level of ['details', 'titles', 'busy']) {
 {
   const { page } = await openPage(browser, { route: '/today', connections: [connection({ paused_until: '2026-11-19T06:00:00.000Z' })] })
   const t = await page.locator('.sh-day').first().innerText().catch(() => '')
-  check('a paused connection is one quiet line: who, paused, when she is back', /paused/.test(t) && /Back tomorrow at 8:00 AM/.test(t) && !/Histology/.test(t), t.replace(/\n/g, ' | '))
+  check('a timed pause is one quiet line: who, paused, when she is back', /paused/.test(t) && /Back tomorrow at 8:00 AM/.test(t) && !/Histology/.test(t), t.replace(/\n/g, ' | '))
   await page.context().close()
+  const inf = await openPage(browser, { route: '/today', connections: [connection({ paused_until: 'infinity' })] })
+  const ti = await inf.page.locator('.sh-day').first().innerText().catch(() => '')
+  check('a pause with no end says so: paused, until turned back on, never a time', /paused/.test(ti) && /Until turned back on/.test(ti) && !/Back /.test(ti) && !/Histology/.test(ti), ti.replace(/\n/g, ' | '))
+  await inf.page.context().close()
+}
+{
+  // each switch decides only its own surface
+  const a = await openPage(browser, { route: '/today', connections: [connection({ show_day: false })] })
+  check('Today card OFF (lane on): no Her day card on Today', (await a.page.locator('.sh-day').count()) === 0)
+  await a.page.context().close()
+  const a2 = await openPage(browser, { route: '/calendar', connections: [connection({ show_day: false })] })
+  await sleep(600)
+  check('...but her lane is still on the calendar (the lane switch is its own)', (await a2.page.locator('.fc-bg-event.kf-her').count()) >= 3)
+  await a2.page.context().close()
+  const b = await openPage(browser, { route: '/calendar', connections: [connection({ show_lane: false })] })
+  await sleep(600)
+  check('Lane OFF (card on): no lane on the calendar', (await b.page.locator('.fc-bg-event.kf-her').count()) === 0)
+  await b.page.context().close()
+  const b2 = await openPage(browser, { route: '/today', connections: [connection({ show_lane: false })] })
+  check('...but her card is still on Today (the Today switch is its own)', (await b2.page.locator('.sh-day').count()) === 1)
+  await b2.page.context().close()
+  const c = await openPage(browser, { phone: true, route: '/calendar', connections: [connection({ show_lane: false })] })
+  await sleep(600)
+  check('phone: lane OFF means no lane bar on the day either', (await c.page.locator('.pc-lane').count()) === 0)
+  await c.page.context().close()
+  // Family / Friend arrive with both off (the server's default): neither surface shows her
+  const fam = await openPage(browser, { route: '/today', connections: [connection({ relation: 'family', show_lane: false, show_day: false })] })
+  check('a Family connection with both switches off: no card', (await fam.page.locator('.sh-day').count()) === 0)
+  await fam.page.context().close()
+  const fam2 = await openPage(browser, { route: '/today', connections: [connection({ relation: 'family', show_lane: false, show_day: true })] })
+  check('...and switching only the Today card on shows the card, lane still off', (await fam2.page.locator('.sh-day').count()) === 1)
+  await fam2.page.context().close()
+}
+{
+  // her colour, per connection, drawn on the card, the lane (desktop and phone) and the avatar; Heather until picked
+  const her = (page, sel) => page.locator(sel).first().evaluate((e) => e.style.getPropertyValue('--her') || getComputedStyle(e).getPropertyValue('--her'))
+  const d = await openPage(browser, { route: '/today' })
+  check('default colour: the card draws in Heather', (await her(d.page, '.sh-day')) === 'var(--blk-heather)')
+  const heatherBlock = await d.page.locator('.sh-blk').first().evaluate((e) => getComputedStyle(e).borderTopColor)
+  await d.page.context().close()
+  const r = await openPage(browser, { route: '/today', connections: [connection({ color: '#E58F99' })] })
+  check('picked Rose: the card carries Rose (--her = the Rose token)', (await her(r.page, '.sh-day')) === 'var(--blk-rose)')
+  const roseBlock = await r.page.locator('.sh-blk').first().evaluate((e) => getComputedStyle(e).borderTopColor)
+  check('…and the block edge really is a different colour from Heather', roseBlock !== heatherBlock, heatherBlock + ' -> ' + roseBlock)
+  await shot(r.page, 'desktop-today-rose')
+  await r.page.context().close()
+  const l = await openPage(browser, { route: '/calendar', connections: [connection({ color: '#4A9266' })] })
+  await sleep(600)
+  check('desktop lane in the picked colour (Pine)', (await her(l.page, '.fc-bg-event.kf-her')) === 'var(--blk-pine)')
+  check('…and the lane chip avatar too', (await her(l.page, '.sh-chip .sh-av')) === 'var(--blk-pine)')
+  const laneBg = await l.page.locator('.fc-bg-event.kf-her:not(.is-busy)').first().evaluate((e) => getComputedStyle(e).backgroundColor)
+  check('...and its drawn colour is not Heather’s', laneBg !== 'rgb(137, 114, 179)' && laneBg !== '', laneBg)
+  await shot(l.page, 'desktop-calendar-lane-pine')
+  await l.page.context().close()
+  const p = await openPage(browser, { phone: true, route: '/calendar', connections: [connection({ color: '#4A9266' })] })
+  await sleep(600)
+  check('phone lane in the picked colour too', (await her(p.page, '.pc-lane')) === 'var(--blk-pine)')
+  await shot(p.page, 'phone-calendar-lane-pine')
+  await p.page.context().close()
 }
 {
   const { page } = await openPage(browser, { route: '/today', connections: [] })
@@ -260,10 +348,19 @@ for (const level of ['details', 'titles', 'busy']) {
   check('…9px wide, hover says her title and time', w.w === 9 && /Reem · /.test(w.title), JSON.stringify(w))
   check('a Busy block of hers is hatched', (await page.locator('.fc-bg-event.kf-her.is-busy').count()) >= 1)
   await shot(page, 'desktop-calendar-lane')
-  const chip = page.getByRole('button', { name: /Hide Reem’s day/ })
-  check('the avatar chip is on for a Partner', (await chip.getAttribute('aria-pressed')) === 'true')
+  const chip = page.getByRole('button', { name: /Hide Reem’s lane on my calendar/ })
+  check('the avatar chip is the lane switch, on for a Partner', (await chip.getAttribute('aria-pressed')) === 'true')
+  // the lane's menu: pause offered there too, with no automatic end first
+  await chip.click({ button: 'right' }); await sleep(500)
+  const items = await page.getByRole('menuitem').allInnerTexts()
+  check('the lane menu offers Pause until I turn it back on, then an hour, and no "today"', items.includes('Pause until I turn it back on') && items.includes('Pause for an hour') && !items.some((x) => /today/i.test(x)) && items.indexOf('Pause until I turn it back on') < items.indexOf('Pause for an hour'), items.join(' | '))
+  await page.getByRole('menuitem', { name: 'Pause until I turn it back on' }).click(); await sleep(500)
+  check('...and it writes infinity (no end)', state.writes.some((w2) => w2.table === 'circles' && /"paused_until":"infinity"/.test(JSON.stringify(w2.body))))
+  await chip.click({ button: 'right' }); await sleep(400)
+  check('while paused the menu says Resume instead', (await page.getByRole('menuitem', { name: 'Resume sharing' }).count()) === 1)
+  await page.keyboard.press('Escape'); await sleep(300)
   await chip.click(); await sleep(600)
-  check('a tap turns the lane off (my member row)', state.writes.some((w2) => w2.table === 'circle_members' && /"show_lane":false/.test(JSON.stringify(w2.body))))
+  check('a tap turns the lane off (my member row, show_lane only)', state.writes.some((w2) => w2.table === 'circle_members' && /"show_lane":false/.test(JSON.stringify(w2.body)) && !/show_day/.test(JSON.stringify(w2.body))))
   // Private switch in an event's menu
   await page.locator('.fc-event', { hasText: 'Dentist' }).first().click(); await sleep(900)
   const priv = page.getByRole('menuitem', { name: /Private/ }).first()
@@ -283,7 +380,7 @@ for (const level of ['details', 'titles', 'busy']) {
   const { page, errors, state } = await openPage(browser, { phone: true, route: '/calendar' })
   await sleep(600)
   const lane = await page.locator('.pc-lane').count()
-  check('phone day: her lane is a thin Heather bar at the column’s edge', lane >= 3, `lane blocks ${lane}`)
+  check('phone day: her lane is a thin bar at the column’s edge (Heather until picked)', lane >= 3, `lane blocks ${lane}`)
   await shot(page, 'phone-calendar-lane')
   await page.locator('.pc-lane').first().click(); await sleep(400)
   const toast = await text(page)
