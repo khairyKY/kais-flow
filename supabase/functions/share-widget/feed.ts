@@ -33,6 +33,9 @@ export interface ReadOk {
   data: { blocks: MaskedBlock[]; top3: MaskedTask[]; tasks: MaskedTask[] }
 }
 
+/** One of her blocks as the skin gets it: a title, or `busy` when the server left the title out. */
+export interface HerBlock { title?: string; busy?: boolean; start: number; end: number; start_hm: string; end_hm: string; color: 'heather' }
+
 const sec = (iso: string) => Math.floor(Date.parse(iso) / 1000)
 
 export function herFeed(r: ReadOk, now: Date, ruleBetween: RuleBetween) {
@@ -41,7 +44,7 @@ export function herFeed(r: ReadOk, now: Date, ruleBetween: RuleBetween) {
   const timed = expandSeries(rows, new Date(r.from), new Date(r.to), r.owner_zone, ruleBetween)
     .filter((b) => !b.all_day && Date.parse(b.ends_at) > t)
     .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))
-  const block = (b: (typeof timed)[number]) => ({
+  const block = (b: (typeof timed)[number]): HerBlock => ({
     ...(b.title ? { title: b.title } : { busy: true }),
     start: sec(b.starts_at),
     end: sec(b.ends_at),

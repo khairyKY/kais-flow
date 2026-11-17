@@ -64,6 +64,6 @@ ok('no link or theme file inside (so an install cannot overwrite a saved link or
 const lua = body.find((e) => e.name.endsWith('widget.lua')).data
 ok('widget.lua inside is UTF-16 LE with its BOM', lua[0] === 0xff && lua[1] === 0xfe)
 const her = body.find((e) => e.name.endsWith('herday.lua')).data
-ok('herday.lua inside is UTF-16 LE with its BOM, and the Her day skin is in', her[0] === 0xff && her[1] === 0xfe && body.some((e) => e.name.endsWith('HerDay\HerDay.ini')))
+ok('herday.lua inside is UTF-16 LE with its BOM, and the Her day skin is in', her[0] === 0xff && her[1] === 0xfe && body.some((e) => e.name.endsWith('HerDay' + BS + 'HerDay.ini')))
 console.log(`\n${n - bad} of ${n} ok`)
 process.exit(bad ? 1 : 0)
