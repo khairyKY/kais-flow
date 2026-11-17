@@ -40,8 +40,8 @@ ok('every file inflates to its size and its CRC matches', files.every((e) => e.d
 ok('names use backslashes, none with a forward slash or a drive', entries.every((e) => !e.name.includes('/') && !/^[A-Za-z]:/.test(e.name)))
 
 const ini = Object.fromEntries(files.find((e) => e.name === 'RMSKIN.ini').data.toString('ascii').split(/\r?\n/).filter((l) => l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]))
-ok('RMSKIN.ini: Version 1.1, MergeSkins 1 (adds to Glass), loads Today, Rainmeter 4.5+',
-  ini.Version === '1.1' && ini.MergeSkins === '1' && ini.Load === ['Glass', 'KaisFlow', 'Today', 'Today.ini'].join(BS) && ini.MinimumRainmeter === '4.5.0', JSON.stringify(ini))
+ok('RMSKIN.ini: Version 1.2, MergeSkins 1 (adds to Glass), loads Today, Rainmeter 4.5+',
+  ini.Version === '1.2' && ini.MergeSkins === '1' && ini.Load === ['Glass', 'KaisFlow', 'Today', 'Today.ini'].join(BS) && ini.MinimumRainmeter === '4.5.0', JSON.stringify(ini))
 ok("RMSKIN.ini: no VariableFiles, no Backup (nothing of Kai's is restored or replaced)", !('VariableFiles' in ini) && !('Backup' in ini))
 
 const body = files.filter((e) => e.name !== 'RMSKIN.ini')
@@ -63,5 +63,7 @@ ok('the only images are grain.png and tape.png (no flowers)', JSON.stringify(pic
 ok('no link or theme file inside (so an install cannot overwrite a saved link or theme)', !body.some((e) => /link|theme/i.test(e.name.split(BS).pop())))
 const lua = body.find((e) => e.name.endsWith('widget.lua')).data
 ok('widget.lua inside is UTF-16 LE with its BOM', lua[0] === 0xff && lua[1] === 0xfe)
+const her = body.find((e) => e.name.endsWith('herday.lua')).data
+ok('herday.lua inside is UTF-16 LE with its BOM, and the Her day skin is in', her[0] === 0xff && her[1] === 0xfe && body.some((e) => e.name.endsWith('HerDay\HerDay.ini')))
 console.log(`\n${n - bad} of ${n} ok`)
 process.exit(bad ? 1 : 0)
