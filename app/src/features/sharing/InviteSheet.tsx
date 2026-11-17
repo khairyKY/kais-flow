@@ -19,24 +19,19 @@ export function InviteSheet({ onClose }: { onClose: () => void }) {
   const [relation, setRelation] = useState<Relation>('partner')
   const [invite, setInvite] = useState<Invite | null>(null)
   const [err, setErr] = useState<string | null>(null)
-  const last = useRef<Invite | null>(null)
+  const made = useRef<{ relation: Relation; code: Promise<Invite> } | null>(null)
 
   // The code exists as soon as the sheet opens (no Generate button); a new relation is a new code, the old one cancelled.
+  // One code per relation: the effect running twice (React's dev check) asks the server once.
   useEffect(() => {
     let live = true
     setInvite(null)
     setErr(null)
-    const old = last.current
-    void (async () => {
-      try {
-        if (old) await cancelInvite(old.id).catch(() => undefined)
-        const made = await createInvite(relation)
-        last.current = made
-        if (live) setInvite(made)
-      } catch {
-        if (live) setErr('Couldn’t make a code. Check the connection and try again.')
-      }
-    })()
+    const prev = made.current
+    if (prev?.relation !== relation) {
+      made.current = { relation, code: (async () => { if (prev) await prev.code.then((i) => cancelInvite(i.id)).catch(() => undefined); return createInvite(relation) })() }
+    }
+    made.current!.code.then((i) => { if (live) setInvite(i) }, () => { if (live) setErr('Couldn’t make a code. Check the connection and try again.') })
     return () => { live = false }
   }, [relation])
 

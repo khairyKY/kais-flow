@@ -76,8 +76,9 @@ export function useLaneTap() {
   return (b: Pick<LaneBlock, 'name' | 'title' | 'starts_at' | 'ends_at'>) => useToastStore.getState().push({ message: laneSays(b, zone) })
 }
 
-/** One chip per person you share with: a tap turns their lane on or off; ⋯ (or a right-click) opens the lane's menu. */
-export function LaneChips() {
+/** One chip per person you share with: a tap turns their lane on or off; the chevron (or a right-click, a long press) opens the lane's menu.
+ * `compact` (the phone's header): the avatar alone. */
+export function LaneChips({ compact = false }: { compact?: boolean }) {
   const { data: people = [] } = useConnections()
   const ui = useSharingUi()
   const zone = useAppZone()
@@ -91,7 +92,7 @@ export function LaneChips() {
           <span key={c.circle_id} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
             <button
               type="button"
-              className="sh-chip"
+              className={`sh-chip${compact ? ' is-compact' : ''}`}
               aria-pressed={c.show_lane}
               aria-label={`${c.show_lane ? 'Hide' : 'Show'} ${c.partner_name}’s day`}
               title={c.paused_until ? `${c.partner_name} · paused · ${pauseLine(c.paused_until, new Date(), zone)}` : undefined}
@@ -99,9 +100,9 @@ export function LaneChips() {
               onContextMenu={(e) => { e.preventDefault(); setMenu({ c, x: e.clientX, y: e.clientY }) }}
             >
               <Avatar name={c.partner_name} size={28} />
-              {c.partner_name}
+              {!compact && c.partner_name}
             </button>
-            <button
+            {!compact && <button
               type="button"
               className="sh-chip"
               style={{ padding: 0, width: 32, justifyContent: 'center' }}
@@ -110,7 +111,7 @@ export function LaneChips() {
               onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setMenu({ c, x: r.left, y: r.bottom + 4 }) }}
             >
               <Icon name="chevdown" size={16} />
-            </button>
+            </button>}
           </span>
         ))}
       </span>

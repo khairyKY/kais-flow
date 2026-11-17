@@ -358,7 +358,7 @@ export function PhoneCalendar() {
             <Icon name="chevdown" size={20} className="pc-chev" />
           </button>
         </h1>
-        <LaneChips />
+        <LaneChips compact />
         <Button variant="ghost" onClick={goToday}>Today</Button>
       </header>
       {!online && (
