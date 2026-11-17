@@ -127,6 +127,9 @@ jobs:
       - name: calendar-feed.sh (your own calendar link - 401s, the ICS, what is in and out, Busy only, RLS per link, the hourly limit)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/calendar-feed.sh 2>&1 | tee "$RUNNER_TEMP/suite-calendar-feed.log"
+      - name: sharing.sh (partner sharing - connect, every level x kind, Private, the lower-level rule, pause, revoke, a third user, never-shared tables, the view link)
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: bash supabase/tests/sharing.sh 2>&1 | tee "$RUNNER_TEMP/suite-sharing.log"
       - name: classroom.sh (Google Classroom deadlines — consent, sync plan, hand-in, Trash, disconnect; Google mocked)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/classroom.sh 2>&1 | tee "$RUNNER_TEMP/suite-classroom.log"
@@ -144,7 +147,7 @@ jobs:
         if: always()
         run: |
           echo "### Suites" >> "$GITHUB_STEP_SUMMARY"
-          for s in gcal-edit ics-unit fix0-auth sec2 notify-prune mcp-week mcp-full widget calendar-feed classroom ics fix5-search retainer-reload; do
+          for s in gcal-edit ics-unit fix0-auth sec2 notify-prune mcp-week mcp-full widget calendar-feed sharing classroom ics fix5-search retainer-reload; do
             log="$RUNNER_TEMP/suite-$s.log"
             if [ ! -f "$log" ]; then echo "- $s: did not run"; continue; fi
             result=$(grep -oE '^[0-9]+ passed.*|^(ok|FAILED) [|] [0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)

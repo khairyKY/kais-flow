@@ -503,6 +503,11 @@ verify_jwt = false
 # Queries still run as the link's owner (role authenticated + RLS).
 verify_jwt = false
 
+[functions.share-view]
+# The no-account share link (v1.6.6, migration 0100 share_links): authenticated by the link's token in the URL, not a JWT — see the function.
+# It asks the database only for share_day_data's masked answer for the link's owner and level.
+verify_jwt = false
+
 [functions.classroom-connect]
 # Google Classroom: Google's OAuth redirect back is a plain browser GET with no JWT (as google-connect).
 # The function checks every POST itself (requireUser) and the callback's HMAC-signed `state`.
