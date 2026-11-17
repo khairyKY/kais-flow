@@ -127,7 +127,7 @@ begin
   new.top3 := false; new.top3_rank := null;     -- a shared list never reaches anyone's Top 3
   if tg_op = 'INSERT' then new.added_by := v_actor;
   elsif old.project_id is distinct from new.project_id then new.added_by := v_actor;   -- moved in
-  else new.added_by := old.added_by; end if;
+  else new.added_by := coalesce(old.added_by, old.user_id); end if;   -- (an item that was there before the list was shared is its owner's)
 
   -- Ticks: set-to-done, first tick keeps the credit, the later of tick / untick wins by arrival.
   if new.status = 'done' then

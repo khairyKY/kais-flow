@@ -311,6 +311,7 @@ rpc "$A_JWT" share_invite_create '{"p_relation":"partner"}'; CODE_B=$(jqe .code)
 rpc "$B_JWT" share_invite_accept "{\"p_code\":\"$CODE_B\"}"; CIRCLE2=$(jqe .circle_id)
 rpc "$A_JWT" share_list_start "{\"p_project\":\"$P_GROC\",\"p_circle\":\"$CIRCLE2\"}"
 expect "they connect again and A shares Groceries again" "true" "$(jqe '.ok | tostring')"
+info "Groceries before B's account goes: $(sql -c "select string_agg(title || ' (' || case user_id when '$A_ID' then 'A' when '$B_ID' then 'B' else '?' end || ', ' || coalesce(deleted_at::text, 'live') || ')', '; ' order by title) from tasks where project_id = '$P_GROC'")"
 sql -c "delete from auth.users where id = '$B_ID'" >/dev/null
 expect "deleting B's account ends it: the list is A's alone, not shared, A's five items all still there" "null 5" "$(sql -c "select concat_ws(' ', coalesce(shared_circle_id::text, 'null'), (select count(*) from tasks where project_id = '$P_GROC' and user_id = '$A_ID' and deleted_at is null)) from projects where id = '$P_GROC'")"
 
