@@ -15,7 +15,13 @@ on:
       tag:
         type: string
         required: true
+  # A manual run may stamp a test version (e.g. v1.6.5-test): a pre-release sorts below the real v1.6.5, so the
+  # silent updater neither replaces a test install with an older release nor keeps it past the real one.
   workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        default: ''
 
 permissions:
   contents: read
