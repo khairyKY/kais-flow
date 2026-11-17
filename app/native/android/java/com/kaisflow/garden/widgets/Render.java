@@ -50,6 +50,7 @@ final class Render {
             case "next": return next(c, s, now);
             case "progress": return progress(c, w, s, now);
             case "daybar": return DayBarWidgets.build(c, cols, rows, w, h, s, now);
+            case "herday": return HerDay.build(c, h, s, now); // Partner sharing P2: her day, the one size
             default: return Families.build(c, kind, cols, rows, w, h, s, now);
         }
     }

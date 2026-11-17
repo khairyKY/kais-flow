@@ -185,6 +185,7 @@ export function offsetOf(feed) {
  *   feedURL   the FeedURL variable
  *   now, offset   the clock (epoch s) and the zone (s east of UTC)
  *   heights   meter -> GetH() (a preview measures them in the browser)
+ *   script    the Lua file to run (default widget.lua; the her-day skin runs herday.lua), herKey that skin's saved key
  *   steps     Lua calls after Initialize, e.g. ['Parse()', "Tick('Row1Cb')"]; {tickOut} sets curl's output
  *   pos       the skin's [x, y] on screen
  */
@@ -196,6 +197,7 @@ export function runSkin(widget, opts = {}) {
   const files = {}
   if (opts.link != null) files[SETTINGS + 'KaisFlow-link.txt'] = opts.link
   if (opts.legacyLink != null) files[RES + 'KaisFlow\\link.txt'] = opts.legacyLink // where 1.0 kept it
+  if (opts.herKey != null) files[SETTINGS + 'KaisFlow-her-link.txt'] = opts.herKey // the her-day skin's own key (herday.lua)
   if (opts.theme != null) files[SETTINGS + 'KaisFlow-theme.txt'] = opts.theme
   const L = lauxlib.luaL_newstate()
   lualib.luaL_openlibs(L)
@@ -213,7 +215,8 @@ export function runSkin(widget, opts = {}) {
     APPKEYS = ${luaLit(opts.app === true ? 'shell\nDefaultIcon' : '')}; APPVALUE = ${luaLit(opts.appValue ?? '')}`, 'setup')
   run(FAKE, 'fake-skin')
   // V['@'] ends in a backslash; fengari's dofile reads it through node's fs, which takes it on Windows
-  run(readText(path.join(RES, 'KaisFlow', 'widget.lua')), 'widget.lua')
+  const script = opts.script ?? 'widget.lua'
+  run(readText(path.join(RES, 'KaisFlow', script)), script)
   run('Initialize()', 'Initialize')
   for (const s of opts.steps ?? []) {
     if (typeof s === 'object' && s.files) { for (const [f, v] of Object.entries(s.files)) run(`FILES[${luaLit(f)}] = ${luaLit(v)}`, 'file'); continue }

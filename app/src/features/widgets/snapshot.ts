@@ -9,6 +9,7 @@ import { remainingWork } from '../today/todayLayout'
 import { computeStreak, computeTrellisDays, routinesForToday, localDateKey } from '../routines/streaks'
 import { getSeason } from '../../lib/seasons'
 import type { DayPhase } from '../today/dayPhase'
+import type { WidgetPartner } from './partnerSnapshot'
 import type { CalendarEvent, Routine, RoutineCompletion, SlippingRow, Task } from '../../lib/types'
 
 // The home-screen widgets' snapshot (Phone Widgets.dc.html): everything they draw, in one small
@@ -110,6 +111,8 @@ export interface WidgetSnapshot {
   memory: { text: string; when: string; source: string; route: string } | null
   specimen: { title: string; date: string; art: string } | null
   season: { name: string; weather: string | null; art: string }
+  /** Her day (Partner sharing P2): the connected person's masked day, or null when nobody is connected. HerDay.java draws it. */
+  partner: WidgetPartner | null
 }
 
 export interface FocusInput {
@@ -154,6 +157,8 @@ export interface SnapshotInput {
   /** The newest herbarium specimen (an archived project). */
   specimen: { title: string; at: string } | null
   weather: { tempC: number; condition: string } | null
+  /** Her day (widgets/partnerSnapshot buildPartner); left out = nobody connected. */
+  partner?: WidgetPartner | null
 }
 
 const ms = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : null)
@@ -375,6 +380,7 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
       weather: i.weather ? `${i.weather.tempC}° ${i.weather.condition}` : null,
       art: SEASON_ART[season],
     },
+    partner: i.partner ?? null,
   }
   return i.hideTitles ? mask(snap) : snap
 }
@@ -397,5 +403,6 @@ export function mask(s: WidgetSnapshot): WidgetSnapshot {
     journal: { line: null },
     memory: s.memory && { ...s.memory, text: 'Something from a while ago' },
     specimen: s.specimen && { ...s.specimen, title: 'A finished project' },
+    partner: s.partner && { ...s.partner, blocks: s.partner.blocks.map((b) => ({ ...b, title: null })), goal: s.partner.goal && { ...s.partner.goal, title: null } },
   }
 }
