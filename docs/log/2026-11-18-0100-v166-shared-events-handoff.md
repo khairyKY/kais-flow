@@ -32,4 +32,4 @@ Built from Kai's P2 picks (design-export/Partner sharing P2 flows.html, flows 1 
 
 ## After the merge (2026-11-18)
 - Merged `origin/claude/kai-bugs-1012` (P1, shared lists, status/notices, widget) with `-X ignore-cr-at-eol`; conflicts in rehearsal.yml (all suites kept, summary list has every one), sharing.css and INDEX.md kept both sides.
-- Rerun after the merge: gate green (vitest x4 zones 3099, lint 0, build, ds:check 0 new), deno check clean (incl. share-widget, delete-account), Rehearsal green with every suite (sharing-events.sh now 91 checks incl. Undo of Remove from mine; it checks only its own functions, since other builders' sharing functions touch other tables by design), harness v166-shared-events 45/45, v166-sharing 56/56.
+- Rerun after the merge: gate green (vitest x4 zones 3099, lint 0, build, ds:check 0 new), deno check clean (incl. share-widget, delete-account), Rehearsal green with every suite (sharing-events.sh now 89 checks incl. Undo of Remove from mine; it checks only its own functions, since other builders' sharing functions touch other tables by design), harness v166-shared-events 45/45, v166-sharing 56/56.
