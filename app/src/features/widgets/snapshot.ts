@@ -40,6 +40,9 @@ export interface WidgetBlock {
   color: string
   goal: boolean
   done: boolean
+  // TODO(sharing): a "Private" item (a field the parallel sharing branch adds; not on this base) goes out as
+  // `private: true`. LockScreen.blocks (java) already reads it: the lock screen shows such a block as "Busy".
+  // Also mask its title here when hideTitles/private so the home-screen widgets don't name it either.
 }
 
 /** One segment of Focus D3's timeline (features/focus/focusPlan): kept, under way, or still to come. */

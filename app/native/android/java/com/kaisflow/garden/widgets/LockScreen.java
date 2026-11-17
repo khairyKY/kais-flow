@@ -35,6 +35,9 @@ import org.json.JSONObject;
  *   C · the Day strip: an ongoing notification with our own layout, the widgets' Day bar (DayBar), the block
  *       that's on and what's next. Every version; a custom layout can't be promoted, so never the Now Bar.
  *   A · the Top 3 lock widget is LockWidget; it redraws from here.
+ *   D · Now / Next (v165-nownext): one quiet ongoing notification, "Now: Gym until 7:15 PM · Next: Dinner 9:00 PM",
+ *       on its own LOW channel. Plain, so it works on any Android 8+ and on a Samsung lock screen that only
+ *       takes Samsung's widgets. Off by default; off in the app's quiet hours (NowNext has the words and times).
  * All of it reads the widgets' snapshot (Snap). Redrawn whenever the home-screen widgets are (KfWidget.updateAll:
  * the app's pushes, a tick, their refresh alarm), at the exact minute a block starts or ends (one exact alarm,
  * the app's USE_EXACT_ALARM), at boot and on Settings → Notifications → This phone. No polling.
@@ -55,6 +58,9 @@ public final class LockScreen {
     private static final String OLD_CHANNEL = "lockscreen";
     private static final int ID_NOW_BAR = 7101;
     private static final int ID_STRIP = 7102;
+    private static final int ID_NOW_NEXT = 7103;
+    /** Now / Next's own channel: LOW (no sound, no vibration, never heads-up). */
+    static final String NOW_NEXT_CHANNEL = "now_next";
     static final String REFRESH = "com.kaisflow.garden.lock.REFRESH";
 
     // ── this device's choices (Settings → Notifications → This phone) ──
@@ -75,6 +81,24 @@ public final class LockScreen {
 
     static boolean stripOn(Context c) {
         return prefs(c).getBoolean("dayStrip", false);
+    }
+
+    /** Settings → Notifications → Now / Next on the lock screen (off until asked). */
+    static boolean nowNextOn(Context c) {
+        return prefs(c).getBoolean("nowNext", false);
+    }
+
+    /** The app's quiet hours (the page pushes them: LockScreenSync); its defaults until then. */
+    static boolean quietOn(Context c) {
+        return prefs(c).getBoolean("quietOn", true);
+    }
+
+    static int quietFrom(Context c) {
+        return prefs(c).getInt("quietFrom", NowNext.QUIET_FROM);
+    }
+
+    static int quietTo(Context c) {
+        return prefs(c).getInt("quietTo", NowNext.QUIET_TO);
     }
 
     /** Settings → Notifications → Show task names on the lock screen (the app pushes it; off until then). */
@@ -112,10 +136,13 @@ public final class LockScreen {
         final long now = System.currentTimeMillis();
         final List<LockPlan.Block> blocks;
         final int min;
+        /** A signed-in snapshot from today: anything it says is true now (else Now / Next says nothing). */
+        final boolean live;
 
         Day(Context c) {
             s = masked(c, Snap.load(c));
-            blocks = s == null || !s.signedIn() || s.newDay(now) ? new ArrayList<>() : blocks(c, s, now);
+            live = s != null && s.signedIn() && !s.newDay(now);
+            blocks = s == null || !s.signedIn() || s.newDay(now) ? new ArrayList<>() : blocks(c, s, now, false);
             min = s == null ? 0 : s.minutes(now);
         }
     }
@@ -123,6 +150,7 @@ public final class LockScreen {
     @SuppressLint("MissingPermission") // areNotificationsEnabled() is checked; a revoke mid-way is caught
     static void refresh(Context c) {
         channel(c); // made up front, so Android's settings list it before the first block
+        if (nowNextOn(c)) nowNextChannel(c);
         LockWidget.updateAll(c);
         NotificationManagerCompat nm = NotificationManagerCompat.from(c);
         Day d = new Day(c);
@@ -136,10 +164,14 @@ public final class LockScreen {
             else nm.cancel(ID_NOW_BAR);
             if (show && stripOn(c)) nm.notify(ID_STRIP, strip(c, s, blocks, min, now));
             else nm.cancel(ID_STRIP);
+            boolean quiet = NowNext.quiet(min, quietOn(c), quietFrom(c), quietTo(c));
+            if (d.live && nowNextOn(c) && !quiet && nm.areNotificationsEnabled()) nm.notify(ID_NOW_NEXT, nowNext(c, s, blocks(c, s, now, true), min));
+            else nm.cancel(ID_NOW_NEXT);
         } catch (RuntimeException e) {
             Log.w(TAG, "notify", e); // POST_NOTIFICATIONS revoked, or a bad snapshot: never crash a broadcast
         }
-        int next = LockPlan.nextChange(blocks, min);
+        int next = LockPlan.nextChange(blocks, min); // every start and end Now / Next changes at, as well as the lead-ins
+        if (nowNextOn(c)) next = NowNext.earliest(next, NowNext.quietChange(min, quietOn(c), quietFrom(c), quietTo(c)));
         schedule(c, s == null ? 0 : next >= 0 ? atMinute(now, min, next) : s.nextMidnight(now));
     }
 
@@ -149,7 +181,7 @@ public final class LockScreen {
     }
 
     /** Today's blocks (Render.blocks), in minutes on the user's clock, in their palette C colour (the goal gold). */
-    private static List<LockPlan.Block> blocks(Context c, Snap s, long now) {
+    private static List<LockPlan.Block> blocks(Context c, Snap s, long now, boolean skipDone) {
         List<LockPlan.Block> out = new ArrayList<>();
         String today = s.day(now);
         int gold = c.getColor(R.color.kfw_gold_warm);
@@ -160,7 +192,13 @@ public final class LockScreen {
             int to = s.day(end).equals(today) ? s.minutes(end) : end > now ? 24 * 60 : 0;
             boolean goal = Render.goalBlock(b);
             int color = goal ? gold : c.getColor(Render.blkAccent(c, Render.swatch(b)));
-            if (to > from) out.add(new LockPlan.Block(from, to, b.optString("title"), color, goal));
+            // skipDone (Now / Next): a task you've ticked is no longer what you're "in"; the Day strip still draws its slot.
+            if (to > from && !(skipDone && b.optBoolean("done"))) {
+                // TODO(sharing): the app doesn't write `private` yet (WidgetBlock has no such field on this base).
+                // When items can be private, snapshot.ts puts it on the block and it shows as "Busy" here.
+                String title = b.optBoolean("private") ? "Busy" : b.optString("title");
+                out.add(new LockPlan.Block(from, to, title, color, goal));
+            }
         }
         return out;
     }
@@ -177,6 +215,43 @@ public final class LockScreen {
         ch.enableLights(false);
         ch.setShowBadge(false);
         nm.createNotificationChannel(ch);
+    }
+
+    private static void nowNextChannel(Context c) {
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm == null || nm.getNotificationChannel(NOW_NEXT_CHANNEL) != null) return;
+        NotificationChannel ch = new NotificationChannel(NOW_NEXT_CHANNEL, "Now / Next", NotificationManager.IMPORTANCE_LOW);
+        ch.setDescription("What's on now and what's next, quietly on the lock screen. Never makes a sound.");
+        ch.setSound(null, null);
+        ch.enableVibration(false);
+        ch.enableLights(false);
+        ch.setShowBadge(false);
+        ch.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+        nm.createNotificationChannel(ch);
+    }
+
+    /** D · Now / Next: two plain lines, the block's colour as the accent, tap opens Today. Ongoing, so a swipe
+     *  can't clear it (switch it off in Settings). LOW + setSilent: no sound, no buzz, never heads-up. */
+    private static android.app.Notification nowNext(Context c, Snap s, List<LockPlan.Block> blocks, int min) {
+        boolean h24 = s.j.optBoolean("hour24");
+        int accent = NowNext.accent(blocks, min);
+        String title = NowNext.title(blocks, min, h24);
+        String text = NowNext.text(blocks, min, h24);
+        NotificationCompat.Builder b = new NotificationCompat.Builder(c, NOW_NEXT_CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_kf)
+            .setColor(accent != 0 ? accent : 0xFF9C5139)
+            .setContentTitle(title)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setGroup("kf.lock.nownext")
+            .setShowWhen(false)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // the titles show on the lock screen (names off: LockScreen.masked)
+            .setContentIntent(KfWidget.open(c, "/today"));
+        if (!text.isEmpty()) b.setContentText(text).setStyle(new NotificationCompat.BigTextStyle().bigText(NowNext.line(blocks, min, h24)));
+        return b.build();
     }
 
     private static NotificationCompat.Builder base(Context c, List<LockPlan.Block> blocks, int min, long now, String group) {
@@ -243,7 +318,7 @@ public final class LockScreen {
         AlarmManager alarms = c.getSystemService(AlarmManager.class);
         if (alarms == null) return;
         PendingIntent pi = PendingIntent.getBroadcast(c, 7100, new Intent(REFRESH, null, c, Receiver.class), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        if (at <= 0 || !(LockWidget.placed(c) || nowBarOn(c) || stripOn(c))) {
+        if (at <= 0 || !(LockWidget.placed(c) || nowBarOn(c) || stripOn(c) || nowNextOn(c))) {
             alarms.cancel(pi);
             return;
         }
@@ -290,6 +365,8 @@ public final class LockScreen {
                     .put("nowBarSupported", nowBarSupported())
                     .put("nowBar", nowBarOn(c))
                     .put("dayStrip", stripOn(c))
+                    .put("nowNext", nowNextOn(c))
+                    .put("nowNextChannel", nowNextImportance(nm))
                     .put("names", names(c))
                     .put("notifications", NotificationManagerCompat.from(c).areNotificationsEnabled())
                     .put("channel", ch == null ? -1 : ch.getImportance())
@@ -301,16 +378,18 @@ public final class LockScreen {
                 if (Build.VERSION.SDK_INT >= 36 && nm != null) o.put("promote", nm.canPostPromotedNotifications());
                 boolean bar = false;
                 boolean strip = false;
+                boolean nowNextPosted = false;
                 Object promoted = JSONObject.NULL;
                 if (nm != null) {
                     for (StatusBarNotification n : nm.getActiveNotifications()) {
                         if (n.getId() == ID_STRIP) strip = true;
+                        if (n.getId() == ID_NOW_NEXT) nowNextPosted = true;
                         if (n.getId() != ID_NOW_BAR) continue;
                         bar = true;
                         if (Build.VERSION.SDK_INT >= 36) promoted = (n.getNotification().flags & android.app.Notification.FLAG_PROMOTED_ONGOING) != 0;
                     }
                 }
-                return o.put("nowBarPosted", bar).put("stripPosted", strip).put("promoted", promoted).toString();
+                return o.put("nowBarPosted", bar).put("stripPosted", strip).put("nowNextPosted", nowNextPosted).put("promoted", promoted).toString();
             } catch (JSONException | RuntimeException e) {
                 Log.w(TAG, "state", e);
                 return "{}";
@@ -328,7 +407,7 @@ public final class LockScreen {
         }
 
         /** The system screen for a fix (Settings → Lock screen status): "promotion" (Live notifications),
-         *  "notifications" (the app's), "channel" (the Lock screen channel), "lockscreen" (the phone's
+         *  "notifications" (the app's), "channel" (the Lock screen channel), "nownext" (the Now / Next channel), "lockscreen" (the phone's
          *  notification settings, where lock screen notifications are). Falls back to the app's page. */
         @JavascriptInterface
         public void open(String which) {
@@ -337,6 +416,7 @@ public final class LockScreen {
             List<Intent> tries = new ArrayList<>();
             if ("promotion".equals(which)) tries.add(new Intent("android.settings.APP_NOTIFICATION_PROMOTION_SETTINGS").putExtra(Settings.EXTRA_APP_PACKAGE, pkg));
             if ("channel".equals(which)) tries.add(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, pkg).putExtra(Settings.EXTRA_CHANNEL_ID, CHANNEL));
+            if ("nownext".equals(which)) tries.add(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, pkg).putExtra(Settings.EXTRA_CHANNEL_ID, NOW_NEXT_CHANNEL));
             if ("lockscreen".equals(which)) tries.add(new Intent("android.settings.NOTIFICATION_SETTINGS"));
             tries.add(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, pkg));
             tries.add(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg)));
@@ -356,6 +436,28 @@ public final class LockScreen {
         public void set(boolean nowBar, boolean dayStrip) {
             prefs(getContext()).edit().putBoolean("nowBar", nowBar).putBoolean("dayStrip", dayStrip).apply();
             refresh(getContext());
+        }
+
+        /** Settings → Notifications → Now / Next on the lock screen. The page has asked for POST_NOTIFICATIONS first. */
+        /** The Now / Next channel's importance (0 off, 1 min, 2 low), -1 while it isn't made (Now / Next never on). */
+        private static int nowNextImportance(NotificationManager nm) {
+            NotificationChannel ch = nm == null ? null : nm.getNotificationChannel(NOW_NEXT_CHANNEL);
+            return ch == null ? -1 : ch.getImportance();
+        }
+
+        @JavascriptInterface
+        public void setNowNext(boolean on) {
+            prefs(getContext()).edit().putBoolean("nowNext", on).apply();
+            refresh(getContext());
+        }
+
+        /** The app's quiet hours (from / to in minutes on the user's clock): Now / Next is off inside them. */
+        @JavascriptInterface
+        public void setQuiet(boolean on, int from, int to) {
+            Context c = getContext();
+            if (quietOn(c) == on && quietFrom(c) == from && quietTo(c) == to) return;
+            prefs(c).edit().putBoolean("quietOn", on).putInt("quietFrom", from).putInt("quietTo", to).apply();
+            refresh(c);
         }
 
         @JavascriptInterface
