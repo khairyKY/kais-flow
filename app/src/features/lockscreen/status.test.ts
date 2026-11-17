@@ -14,6 +14,29 @@ const A16: LockState = {
 const A15: LockState = { ...A16, sdk: 35, release: '15', nowBarSupported: false, nowBar: false, promote: undefined, promoted: null }
 const line = (st: LockState, id: string) => lockStatus(st, time).find((l) => l.id === id)!
 
+describe('lockStatus: Now / Next (v165)', () => {
+  const NN: LockState = { ...A15, nowNext: true, nowNextPosted: true, nowNextChannel: 2 }
+  it('an older shell has no Now / Next line', () => {
+    expect(lockStatus(A15, time).map((l) => l.id)).toEqual(['top3', 'nowbar', 'strip'])
+  })
+  it('on and posted: listed first, active', () => {
+    expect(lockStatus(NN, time).map((l) => l.id)).toEqual(['nownext', 'top3', 'nowbar', 'strip'])
+    expect(line(NN, 'nownext')).toMatchObject({ ok: true })
+  })
+  it('off says where the switch is', () => {
+    expect(line({ ...NN, nowNext: false }, 'nownext')).toMatchObject({ ok: false, text: 'Off: turn on “Now / Next on the lock screen” above' })
+  })
+  it('the first thing in the way, with its system screen', () => {
+    expect(line({ ...NN, notifications: false }, 'nownext')).toMatchObject({ ok: false, open: 'notifications' })
+    expect(line({ ...NN, nowNextChannel: 0 }, 'nownext')).toMatchObject({ ok: false, open: 'nownext' })
+    expect(line({ ...NN, lock: false }, 'nownext')).toMatchObject({ ok: false, open: 'lockscreen' })
+    expect(line({ ...NN, lockSilent: false }, 'nownext')).toMatchObject({ ok: false, open: 'lockscreen', text: expect.stringContaining('silent') })
+  })
+  it('not posted (quiet hours / no day yet): says so, no screen to open', () => {
+    expect(line({ ...NN, nowNextPosted: false }, 'nownext')).toMatchObject({ ok: false, open: undefined })
+  })
+})
+
 describe('lockStatus', () => {
   it('all three active', () => {
     expect(lockStatus(A16, time).map((l) => [l.id, l.ok])).toEqual([['top3', true], ['nowbar', true], ['strip', true]])

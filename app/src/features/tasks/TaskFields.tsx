@@ -3,6 +3,7 @@ import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
 import { setTaskPrivate } from '../sharing/private'
+import { PRIVATE_IN_LIST, isSharedList } from '../sharing/lists'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
@@ -117,6 +118,9 @@ export function TaskChips({ task, controls, ringed, now = new Date(), length = t
   length?: boolean
 }) {
   const { open, place } = controls
+  // Shared lists (0102): everything in a shared list is shared, so the Private switch is off there and says why.
+  const { data: allProjects = [] } = useProjects()
+  const inSharedList = isSharedList(allProjects.find((p) => p.id === task.project_id))
   const when = taskWhen(task)
   const minutes = taskMinutes(task)
   const chip = (field: MenuSub, value: ReactNode, tone: 'date' | 'duration' | 'project' | 'priority', icon?: IconName) => (
@@ -145,8 +149,8 @@ export function TaskChips({ task, controls, ringed, now = new Date(), length = t
       ))}
       {task.labels.length === 0 && unset('labels', 'Label', 'label')}
       {/* Sharing (v1.6.6): Private — the people you share with never see this task's title or notes; its block is a Busy block. */}
-      <Chip tone="bordered" icon={<Icon name="lock" size={16} />} selected={!!task.private} style={task.private ? undefined : DASHED} onClick={() => setTaskPrivate(task, !task.private)}>
-        Private
+      <Chip tone="bordered" icon={<Icon name="lock" size={16} />} selected={!!task.private && !inSharedList} disabled={inSharedList} style={task.private && !inSharedList ? undefined : DASHED} onClick={() => setTaskPrivate(task, !task.private)}>
+        {inSharedList ? `Private · ${PRIVATE_IN_LIST.toLowerCase()}` : 'Private'}
       </Chip>
     </div>
   )

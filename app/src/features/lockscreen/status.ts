@@ -5,7 +5,7 @@
 import type { LockOpen, LockState } from './native'
 
 export interface LockLine {
-  id: 'top3' | 'nowbar' | 'strip'
+  id: 'nownext' | 'top3' | 'nowbar' | 'strip'
   name: string
   ok: boolean
   text: string
@@ -60,7 +60,22 @@ export function lockStatus(st: LockState, time: (ms: number) => string): LockLin
     return line(true, 'On the lock screen now. Only an icon there? Set Lock screen notifications to Cards', 'lockscreen')
   })()
 
-  return [top3, nowbar, strip]
+  // v165: Now / Next is a plain ongoing notification, so it works on any Android 8+ (and under Samsung's
+  // widget-only lock screen). Listed first, and only on a shell that has it.
+  const nownext = ((): LockLine | null => {
+    if (st.nowNext === undefined) return null
+    const line = (ok: boolean, text: string, open?: LockOpen): LockLine => ({ id: 'nownext', name: 'Now / Next', ok, text, open })
+    if (!st.nowNext) return line(false, 'Off: turn on “Now / Next on the lock screen” above')
+    if (st.notifications === false) return line(false, 'Notifications are turned off for Kai’s Flow', 'notifications')
+    if (st.nowNextChannel === 0) return line(false, 'The “Now / Next” notifications are turned off for Kai’s Flow', 'nownext')
+    if (st.lock === false) return line(false, 'This phone shows no notifications on the lock screen', 'lockscreen')
+    // It is a quiet (low-importance) notification, which some lock screens can be set to hide.
+    if (st.lockSilent === false) return line(false, 'Lock screen hides silent notifications. Allow them to see it there', 'lockscreen')
+    if (!st.nowNextPosted) return line(false, 'Not showing: quiet hours are on, or open Kai’s Flow once so it has today')
+    return line(true, 'On the lock screen now. Only an icon there? Set Lock screen notifications to Cards', 'lockscreen')
+  })()
+
+  return [...(nownext ? [nownext] : []), top3, nowbar, strip]
 }
 
 /** The shell can say (v161 and later); v1.6.0's says only the switches. */

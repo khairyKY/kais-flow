@@ -6,7 +6,8 @@ import type { Area, Domain, Project, Task } from '../../lib/types'
 // projects; these are its rules. Pure, so they're tested (move.test.ts).
 
 export type MoveTarget =
-  | { kind: 'project'; id: string; domainId: string | null; name: string }
+  /** `shared`: a project shared with someone (0102): a task moved into it is shared with them, so it can't stay Private. */
+  | { kind: 'project'; id: string; domainId: string | null; name: string; shared?: boolean }
   | { kind: 'area'; id: string; domainId: string | null; name: string }
   | { kind: 'domain'; id: string; name: string }
   | { kind: 'none'; name: string }
@@ -24,7 +25,8 @@ export function placeTask<T extends Place>(task: T, to: MoveTarget): T {
     : to.kind === 'domain' ? { project_id: null, area_id: null, domain_id: to.id, milestone_id: null }
     : { project_id: null, area_id: null, domain_id: null, milestone_id: null }
   if (place.project_id !== task.project_id) place.milestone_id = null
-  return { ...task, ...place }
+  // Everything in a shared list is shared: a Private task moved in stops being Private (the server refuses the other way round).
+  return { ...task, ...place, ...(to.kind === 'project' && to.shared && (task as { private?: boolean }).private ? { private: false } : {}) }
 }
 
 /** The picker's key for where a task is now (its check mark): the project, else the area, else the domain. */
@@ -67,7 +69,7 @@ export function moveGroups(domains: Domain[], areas: Area[], projects: Project[]
   const inside = (domainId: string | null) => (x: { domain_id: string | null }) => (domainId ? x.domain_id === domainId : !x.domain_id || !known.has(x.domain_id))
   const contents = (domainId: string | null): MoveTarget[] => [
     ...areas.filter(inside(domainId)).map((a): MoveTarget => ({ kind: 'area', id: a.id, domainId, name: a.name })),
-    ...live.filter(inside(domainId)).map((p): MoveTarget => ({ kind: 'project', id: p.id, domainId, name: p.name })),
+    ...live.filter(inside(domainId)).map((p): MoveTarget => ({ kind: 'project', id: p.id, domainId, name: p.name, ...(p.shared_circle_id ? { shared: true } : {}) })),
   ]
   const groups: MoveGroup[] = [
     ...domains.map((d) => ({ key: d.id, title: d.name, targets: [{ kind: 'domain', id: d.id, name: d.name } as MoveTarget, ...contents(d.id)] })),

@@ -42,6 +42,7 @@ import { useResurfacePick } from '../resurfacing/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
 import { HerDayCards } from '../sharing/HerDayCard'
+import { ShareTodayExtras } from '../sharing/StatusNotice'
 import { CAPTURE_INPUT_ID, openTaskCapture } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button, Star, KeyCombo } from '../../components/kit'
 import { Icon } from '../../components/Icon'
@@ -749,6 +750,7 @@ function TodayView({ nav }: { nav: DayNav }) {
             {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : planFirst ? (
               <RitualCard kind="plan" panel day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />
             ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} onStep={nav.step} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
+            <ShareTodayExtras />
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
@@ -878,6 +880,7 @@ function TodayView({ nav }: { nav: DayNav }) {
           rowSelection={rowSelection}
         />
       )}
+      {deskCard && <ShareTodayExtras />}
       {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14 }} />}
 
       {/* The side column grows with the page too, from 264 to 340 (Kai 2026-10-03). */}

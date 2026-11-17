@@ -41,6 +41,8 @@ export interface WidgetBlock {
   color: string
   goal: boolean
   done: boolean
+  /** A Private item (0100): your own widgets still name it; the lock screen (LockScreen.blocks, java), seen by anyone near the phone, shows it as "Busy". */
+  private?: boolean
 }
 
 /** One segment of Focus D3's timeline (features/focus/focusPlan): kept, under way, or still to come. */
@@ -268,7 +270,7 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
   const blocks: WidgetBlock[] = live
     .filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || (ms(e.starts_at)! <= t && t < ms(e.ends_at)!)))
     .sort((a, b) => ms(a.starts_at)! - ms(b.starts_at)!)
-    .map((e) => ({ id: e.id, taskId: e.task_id ?? '', title: e.title, start: ms(e.starts_at)!, end: ms(e.ends_at)!, color: hue(e), goal: !!e.task_id && e.task_id === goalId, done: !!e.task_id && doneIds.has(e.task_id) }))
+    .map((e) => ({ id: e.id, taskId: e.task_id ?? '', title: e.title, ...(e.private ? { private: true } : null), start: ms(e.starts_at)!, end: ms(e.ends_at)!, color: hue(e), goal: !!e.task_id && e.task_id === goalId, done: !!e.task_id && doneIds.has(e.task_id) }))
 
   // ── The Top 3, each with its block's time today (else its own schedule) ──
   const item = (x: Task): WidgetItem => {
