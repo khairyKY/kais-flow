@@ -41,6 +41,9 @@ interface ContextMenuProps {
   label?: string
   /** M2 (2026-10-22): the 100ms way out — the caller keeps it mounted meanwhile (lib/motion useOverlayExit). */
   closing?: boolean
+  /** The thing this menu hangs off (the block it was opened from): a press on it does not close the menu — its own
+   * click opens the same menu again, and close-then-reopen was a flicker (v165-block-click). A drag from it does close. */
+  isAnchor?: (target: Node) => boolean
 }
 
 const SUBMENU_OPEN_DELAY = 150
@@ -51,7 +54,7 @@ const SUBMENU_OPEN_DELAY = 150
 const SUBMENU_SWITCH_DELAY = 300
 const SUBMENU_WIDTH = 220
 
-export function ContextMenu({ items, position, onClose, header, width, label, closing = false }: ContextMenuProps) {
+export function ContextMenu({ items, position, onClose, header, width, label, closing = false, isAnchor }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const openTimer = useRef<number | null>(null)
@@ -60,6 +63,8 @@ export function ContextMenu({ items, position, onClose, header, width, label, cl
   const openedAt = useRef(performance.now())
   const closingRef = useRef(closing)
   closingRef.current = closing
+  const isAnchorRef = useRef(isAnchor)
+  isAnchorRef.current = isAnchor
 
   useEscapeStack(!closing, onClose)
 
@@ -67,8 +72,25 @@ export function ContextMenu({ items, position, onClose, header, width, label, cl
     function handleClick(e: MouseEvent) {
       if (closingRef.current) return
       if (ref.current && !ref.current.contains(e.target as Node)) {
+        if (isAnchorRef.current?.(e.target as Node)) return dragCloses(e)
         onClose()
       }
+    }
+    // A press on the anchor keeps the menu; if it turns into a drag the block moves away from the menu: close then.
+    function dragCloses(down: MouseEvent) {
+      const move = (m: PointerEvent) => {
+        if (Math.abs(m.clientX - down.clientX) + Math.abs(m.clientY - down.clientY) <= 4) return
+        stop()
+        onClose()
+      }
+      const stop = () => {
+        window.removeEventListener('pointermove', move, true)
+        window.removeEventListener('pointerup', stop, true)
+        window.removeEventListener('pointercancel', stop, true)
+      }
+      window.addEventListener('pointermove', move, true)
+      window.addEventListener('pointerup', stop, true)
+      window.addEventListener('pointercancel', stop, true)
     }
     // A fixed menu over a scrolled list detaches from the row it was opened on — close it. A
     // scroll inside the menu (a submenu's own list: the date picker's times) is not that. Scroll

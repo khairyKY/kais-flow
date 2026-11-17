@@ -366,6 +366,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
       position={position}
       onClose={onClose}
       closing={closing}
+      isAnchor={(t) => !!(t as Element).closest?.(`.fc-event[data-kf-id="${CSS.escape(event.id)}"]`)}
       width={BLOCK_MENU_WIDTH}
       label={menu ? 'Block menu' : 'Block details'}
       header={
