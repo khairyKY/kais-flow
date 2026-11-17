@@ -1,4 +1,5 @@
 // The small pieces the sharing screens share: the avatar, "never shared", the level list with previews, the 8 code tiles.
+import type { CSSProperties } from 'react'
 import { Icon } from '../../components/Icon'
 import { useToastStore } from '../../lib/toastStore'
 import { LEVELS, LEVEL_HELP, LEVEL_NAME, formatCode, type Level } from './model'
@@ -7,7 +8,7 @@ import './sharing.css'
 /** A round initial: mine in bone, hers in Heather. */
 export function Avatar({ name, her = true, size = 28, dim }: { name: string; her?: boolean; size?: number; dim?: boolean }) {
   return (
-    <span className={`sh-av${her ? ' is-her' : ''}${dim ? ' is-dim' : ''}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.45) }} aria-hidden="true">
+    <span className={`sh-av${her ? ' is-her' : ''}${dim ? ' is-dim' : ''}`} style={{ '--sh-size': `${size}px` } as CSSProperties} aria-hidden="true">
       {(name.trim()[0] ?? '?').toUpperCase()}
     </span>
   )

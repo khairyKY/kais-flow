@@ -20,12 +20,13 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5a a task block: when · project, the task as a quiet group, Unschedule ⌫, Delete last — no Repeat', () => {
     const spec = blockMenuSpec(block({ task_id: 't1', type: 'task' }), { task: { title: 'Host all the AI in one place', status: 'todo' }, placeName: 'Forecasting', now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'unschedule', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'private', 'complete', 'open', 'unschedule', 'delete'])
     expect(spec[0]).toMatchObject({ label: 'Wed, Jul 29', sub: true })
     expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h', sub: true }) // Cairo, UTC+3
     expect(spec[2]).toMatchObject({ label: 'Forecasting', unset: false })
-    expect(spec[3]).toMatchObject({ label: 'Complete', divider: true, caption: { label: 'From task', text: 'Host all the AI in one place' } })
-    expect(spec[5]).toMatchObject({ label: 'Unschedule', hint: '⌫', divider: true })
+    expect(spec[3]).toMatchObject({ key: 'private', label: 'Private', on: false }) // sharing: the task's own flag
+    expect(spec[4]).toMatchObject({ label: 'Complete', divider: true, caption: { label: 'From task', text: 'Host all the AI in one place' } })
+    expect(spec[6]).toMatchObject({ label: 'Unschedule', hint: '⌫', divider: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', label: 'Delete', destructive: true, sub: false })
     expect(spec.filter((r) => r.destructive)).toHaveLength(1)
   })
@@ -37,7 +38,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5c a plain block: Repeat, Link a task…, More (kind + busy, the deviation), Delete', () => {
     const spec = blockMenuSpec(block(), { now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'repeat', 'remind', 'link', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'private', 'repeat', 'remind', 'link', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project or area', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
@@ -70,7 +71,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('a repeating block: no Link a task, and Delete asks the scope (This / Following / All)', () => {
     const spec = blockMenuSpec(block({ recurrence_rule: 'FREQ=WEEKLY' }))
-    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'repeat', 'remind', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'private', 'repeat', 'remind', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'repeat')?.label).toBe('Repeats weekly')
     expect(spec.at(-1)).toMatchObject({ key: 'delete', sub: false }) // cal-clicks: the scope question asks
     expect(spec.at(-1)?.hint).toBeUndefined() // ⌫ never deletes a series' occurrence unasked
@@ -133,7 +134,7 @@ describe('a Google event (B1): read-only', () => {
     const e = block({ source: 'gcal', type: 'event', title: 'Fajr', external_ref: { source: 'gcal', id: 'p/e1', calendar: 'Prayer times', calendar_id: 'p' } })
     const spec = blockMenuSpec(e, { now: NOW })
     expect(isSynced(e)).toBe(true)
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'gopen', 'duplicate'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'gopen', 'private', 'duplicate'])
     expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
     expect(spec.at(-1)).toMatchObject({ label: 'Duplicate as my event' })
     expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h' })
@@ -146,7 +147,7 @@ describe('a Google event (B1): read-only', () => {
     const ref = { source: 'gcal', id: 'p/e1', calendar: 'Kai', calendar_id: 'p' }
     const mine = block({ source: 'gcal', type: 'event', external_ref: { ...ref, edit: true, url: 'https://meet.google.com/abc-defg-hij' } })
     const spec = blockMenuSpec(mine, { now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'google', 'join', 'gopen', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'google', 'join', 'gopen', 'private', 'delete'])
     expect(spec[0]).toMatchObject({ sub: true })
     expect(spec[1]).toMatchObject({ key: 'ends', sub: true })
     expect(spec[2]).toMatchObject({ key: 'time', sub: true })
@@ -169,7 +170,7 @@ describe('a subscribed-calendar event (ics-subscribe): read-only, from a link', 
     const e = block({ source: 'ics', type: 'event', title: 'الفجر', external_ref: { source: 'ics', id: 's/u/', calendar: 'مواقيت الصلاة', calendar_id: 's' } })
     const spec = blockMenuSpec(e, { now: NOW })
     expect(isSynced(e)).toBe(true)
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'duplicate'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'private', 'duplicate'])
     expect(spec[2]).toMatchObject({ label: 'From subscription · مواقيت الصلاة' })
     expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
     expect(keys(e, { now: NOW, mode: 'menu' })).toEqual(['details', 'duplicate', 'ai', 'copylink'])
@@ -196,6 +197,6 @@ describe('F7 multi-day rows', () => {
   })
 
   it('a task block keeps its single Date row', () => {
-    expect(blockMenuSpec(block({ task_id: 't1' }), { task: { title: 'x', status: 'todo' } }).map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'unschedule', 'delete'])
+    expect(blockMenuSpec(block({ task_id: 't1' }), { task: { title: 'x', status: 'todo' } }).map((r) => r.key)).toEqual(['date', 'time', 'project', 'private', 'complete', 'open', 'unschedule', 'delete'])
   })
 })

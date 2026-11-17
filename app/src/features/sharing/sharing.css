@@ -2,7 +2,7 @@
    (the 8-tile code, the level list with previews, the full "Her day" card, the thin Heather lane). Existing tokens only: her colour is
    palette C's Heather (--blk-heather), dashed on a block. */
 
-.sh-av { flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; line-height: 1; font-family: var(--font-ui); background: var(--paper-bone); border: 1px solid var(--line-control); color: var(--ink-body); }
+.sh-av { width: var(--sh-size, 28px); height: var(--sh-size, 28px); font-size: calc(var(--sh-size, 28px) * 0.45); flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; line-height: 1; font-family: var(--font-ui); background: var(--paper-bone); border: 1px solid var(--line-control); color: var(--ink-body); }
 .sh-av.is-her { background: color-mix(in srgb, var(--blk-heather) 30%, var(--paper-parchment)); border-color: color-mix(in srgb, var(--blk-heather) 65%, transparent); color: var(--blk-heather-ink); }
 .sh-av.is-dim { opacity: 0.5; filter: grayscale(1); }
 
@@ -22,7 +22,7 @@
 
 /* ── the code, in 8 tiles ── */
 .sh-tiles { display: flex; align-items: center; gap: 6px; }
-.sh-tile { flex: 1; min-width: 0; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-input); border: 1px solid var(--line-control); background: var(--paper-bone); font: 600 var(--fs-display-l) / 1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--ink-body); }
+.sh-tile { flex: 1; min-width: 0; height: 54px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-input); border: 1px solid var(--line-control); background: var(--paper-bone); font: 500 var(--fs-display-l) / 1 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--ink-body); }
 .sh-tile.is-focus { border: 2px solid var(--sel-bg); }
 .sh-dash { flex: none; color: var(--ink-faint); font-size: var(--fs-lead); }
 .sh-code-in { position: relative; }
@@ -40,7 +40,7 @@
 .sh-never b { color: var(--ink-body); }
 .sh-never svg { flex: none; margin-top: 2px; }
 .sh-head { display: flex; align-items: center; gap: 14px; margin: 4px 0 8px; }
-.sh-head .sh-name { font: 500 var(--fs-display-l) / 1.15 var(--font-display); letter-spacing: -0.015em; }
+.sh-head .sh-name { font: 500 var(--fs-display-l) / 1.15 var(--font-display); letter-spacing: var(--ls-display); }
 .sh-head .sh-since { font-size: var(--fs-body-s); color: var(--ink-muted); }
 
 /* ── the level list with previews ── */
@@ -92,9 +92,9 @@
 .sh-sec-l { font-size: var(--fs-mono-s); color: var(--ink-faint); margin-bottom: 4px; }
 .sh-task { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: var(--fs-body-s); }
 .sh-task + .sh-task { border-top: 1px solid var(--line-card); }
-.sh-task .sh-mk { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 5px; border: 1.5px solid var(--check-border); display: flex; align-items: center; justify-content: center; font-size: var(--fs-mono-s); color: var(--check-mark); }
+.sh-task .sh-mk { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: var(--radius-page); border: 1.5px solid var(--check-border); display: flex; align-items: center; justify-content: center; font-size: var(--fs-mono-s); color: var(--check-mark); }
 .sh-task.is-done .sh-mk { background: var(--check-fill); border-color: var(--check-fill); }
-.sh-task.is-done .sh-tt { color: var(--ink-hairline); text-decoration: line-through; }
+.sh-task.is-done .sh-tt { color: var(--ink-faint); text-decoration: line-through; }
 .sh-task .sh-tt { flex: 1; min-width: 0; }
 .sh-task .sh-notes { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
 .sh-star { color: var(--acc-gold); }
@@ -103,7 +103,7 @@
 
 /* ── the thin Heather lane (a FullCalendar background event; CalendarGrid carries kf-her) ── */
 .kf-has-her .fc-timegrid-col-events { margin-left: 14px; }
-.fc .fc-bg-event.kf-her { width: 9px; right: auto; opacity: 1; border-radius: 5px; background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); pointer-events: auto; cursor: pointer; margin-left: calc(var(--kf-lane, 0) * 11px); }
+.fc .fc-bg-event.kf-her { width: 9px; right: auto; opacity: 1; border-radius: var(--radius-page); background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); pointer-events: auto; cursor: pointer; margin-left: calc(var(--kf-lane, 0) * 11px); }
 .fc .fc-bg-event.kf-her.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .fc .fc-bg-event.kf-her .fc-event-title { display: none; }
 
@@ -120,7 +120,7 @@
 
 /* ── the view link: its page for someone with no account ── */
 .sv-page { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; color: var(--ink-body); }
-.sv-page h1 { margin: 0; font: 500 var(--fs-display-l) / 1.15 var(--font-display); letter-spacing: -0.015em; }
+.sv-page h1 { margin: 0; font: 500 var(--fs-display-l) / 1.15 var(--font-display); letter-spacing: var(--ls-display); }
 .sv-sub { margin: 4px 0 14px; font-size: var(--fs-body-s); color: var(--ink-muted); }
 .sv-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .sv-nav button { min-height: 40px; padding: 0 14px; border-radius: var(--radius-pill); border: 1px solid var(--line-control); background: var(--paper-bone); font: 500 var(--fs-body) var(--font-ui); color: var(--ink-body); cursor: pointer; }
@@ -134,6 +134,6 @@
 .sv-gone p { margin: 0; color: var(--ink-muted); font-size: var(--fs-body-s); }
 
 /* the phone grid's lane: a thin Heather bar at the column's left edge (PhoneGrid draws a button per block) */
-.pc-lane { position: absolute; width: 9px; padding: 0; border: 0; border-radius: 5px; background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); margin-left: calc(var(--lane, 0) * 11px); cursor: pointer; }
+.pc-lane { position: absolute; width: 9px; padding: 0; border: 0; border-radius: var(--radius-page); background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); margin-left: calc(var(--lane, 0) * 11px); cursor: pointer; }
 .pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .pc-lane:focus-visible { outline: none; box-shadow: var(--focus-ring); }
