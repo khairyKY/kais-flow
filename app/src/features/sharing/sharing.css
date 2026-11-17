@@ -139,3 +139,18 @@
 .pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .pc-lane:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .sh-chip.is-compact { width: 40px; padding: 0; justify-content: center; }
+
+/* ── P2: the status line under the Now card, the notices strip, the status sheet (design-export/Partner sharing P2 flows.html) ── */
+.sh-status { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; margin-top: 8px; padding: 6px 12px; text-align: left; background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-card); color: var(--ink-muted); font: inherit; font-size: var(--fs-body-s); cursor: pointer; }
+.sh-status:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-status .sh-status-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-status b { color: var(--ink-body); font-weight: 600; }
+.sh-strip { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 12px 14px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); }
+.sh-strip-h { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); }
+.sh-strip-l { font-size: var(--fs-body-s); color: var(--ink-muted); line-height: 1.5; }
+.sh-own { display: flex; gap: 8px; margin-top: 10px; }
+.sh-field { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: var(--radius-input); border: 1px solid var(--line-control); background: var(--paper-bone); color: var(--ink-body); font: inherit; font-size: var(--fs-body); }
+.sh-field:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-stt { font-weight: 400; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sh-chip .sh-stt { font-size: var(--fs-meta-l); max-width: 160px; }
+.sh-exp .sh-link { background: none; border: 0; cursor: pointer; font: inherit; font-weight: 600; color: var(--acc-terra-ink); padding: 4px; }

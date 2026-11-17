@@ -47,6 +47,9 @@ export function invalidateSoon(table: string): void {
     if (table === 'share_pings') {
       void queryClient.invalidateQueries({ queryKey: ['shared_day'] })
       void queryClient.invalidateQueries({ queryKey: ['share_connections'] })
+      // P2 (0103): her status and the notices waiting for me are asked again too.
+      void queryClient.invalidateQueries({ queryKey: ['shared_status'] })
+      void queryClient.invalidateQueries({ queryKey: ['partner_notices'] })
     }
   }, Math.max(0, Math.min(DEBOUNCE_MS, since + MAX_WAIT_MS - now)))
   waiting.set(table, { timer, since })
