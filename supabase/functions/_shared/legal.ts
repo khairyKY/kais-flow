@@ -43,6 +43,7 @@ export interface LegalNote {
 export const LEGAL_NOTES: readonly LegalNote[] = [
   { id: '2026-11-03', doc: 'privacy', line: 'Google Calendar events you change here are now written back to Google, and calendars you subscribe to by link are kept on our server and never shown to the AI.' },
   { id: '2026-11-16', doc: 'privacy', line: 'You can now make a private calendar link that shows your events and scheduled tasks in another calendar app; anyone with the link can read it, and you can revoke it any time.' },
+  { id: '2026-11-17', doc: 'privacy', line: 'You can now share your day with someone you connect with, at a level you choose (Busy only, Titles or Details), or with a view link for someone without an account. Private items show as Busy, and your journal, health notes, people and AI chat are never shared. The Terms have a line on it too.' },
 ]
 
 /** A dismissed note is one `consents` row: document `<doc>_notice`, version = the note's id (0093). */

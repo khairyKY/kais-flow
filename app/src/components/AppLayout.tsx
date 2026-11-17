@@ -8,6 +8,7 @@ import { useSignOut } from '../features/auth/useSignOut'
 import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow, type SyncView } from './syncQueue'
 import { discardParked, retryParked } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
+import { SharingHost } from '../features/sharing/SharingHost'
 import { openCapture, useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
 import { useTasks } from '../features/tasks/api'
@@ -1238,6 +1239,7 @@ export function AppLayout() {
       <LegalNoteHost />
       <SubtaskAskHost />
       <ScopeAskHost />
+      <SharingHost />
       <ToastHost />
       <AppBadge />
       {signOutFlow.prompt}

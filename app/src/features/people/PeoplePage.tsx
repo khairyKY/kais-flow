@@ -5,6 +5,7 @@ import { useDomains } from '../domains/api'
 import { timeAgo } from './timeAgo'
 import type { Person, Interaction, Domain } from '../../lib/types'
 import { Button, SectionLabel } from '../../components/kit'
+import { useSharingUi } from '../sharing/ui'
 import { toastUndo } from '../../lib/undo'
 import { exitAll, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
@@ -69,6 +70,7 @@ const BloomBadge = () => (
 )
 
 export function PeoplePage() {
+  const openInvite = useSharingUi((s) => s.openInvite)
   const isMobile = useIsMobile()
   const motion = useMotionEnabled()
   const navigate = useNavigate()
@@ -219,6 +221,7 @@ export function PeoplePage() {
             <img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
             <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--ink-body)' }}>People</h1>
           </div>
+          <Button variant="ghost" onClick={openInvite} aria-label="Share your day with someone">Share your day</Button>
           <button
             type="button"
             aria-label="New person"
@@ -333,6 +336,8 @@ export function PeoplePage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span className="fhelp">{people.length} people · {totalFacts} facts kept</span>
+          {/* Sharing (v1.6.6): the invite lives here too. The patch itself is never shared; this connects two accounts' calendars. */}
+          <Button variant="secondary" onClick={openInvite}>Share your day</Button>
           <Button onClick={() => setShowNewForm(!showNewForm)}>+ New person</Button>
         </div>
       </div>

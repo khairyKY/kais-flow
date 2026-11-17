@@ -2,6 +2,7 @@ import { useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type 
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu } from '../../components/ContextMenu'
+import { setTaskPrivate } from '../sharing/private'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
@@ -143,6 +144,10 @@ export function TaskChips({ task, controls, ringed, now = new Date(), length = t
         </Chip>
       ))}
       {task.labels.length === 0 && unset('labels', 'Label', 'label')}
+      {/* Sharing (v1.6.6): Private — the people you share with never see this task's title or notes; its block is a Busy block. */}
+      <Chip tone="bordered" icon={<Icon name="lock" size={16} />} selected={!!task.private} style={task.private ? undefined : DASHED} onClick={() => setTaskPrivate(task, !task.private)}>
+        Private
+      </Chip>
     </div>
   )
 }

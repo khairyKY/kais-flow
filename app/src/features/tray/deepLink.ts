@@ -1,6 +1,6 @@
 // kaisflow:// links (src-tauri/src/capture.rs hands the web app the link it was sent): the five the
 // Rainmeter widgets and other tools use. `capture` never reaches here (the popup opens in Rust).
-//   kaisflow://today · calendar · focus · task/<id>
+//   kaisflow://today · calendar · focus · task/<id> · join/<code> (a sharing invite: opens the confirm step)
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/
 
@@ -12,5 +12,6 @@ export function deepLinkRoute(url: string): string | null {
   const rest = m[2]!.replace(/\/+$/, '')
   if (!rest && (host === 'today' || host === 'calendar' || host === 'focus')) return `/${host}`
   if (host === 'task' && ID.test(rest)) return `/tasks/${rest}`
+  if (host === 'join' && /^[A-Za-z0-9]{8}$/.test(rest)) return `/join/${rest.toUpperCase()}`
   return null
 }

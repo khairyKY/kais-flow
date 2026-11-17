@@ -4,6 +4,7 @@ import { useLocation } from 'react-router'
 import { TASK_PARAM, taskAnchor, useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
+import { LaneChips, laneSays, useLanes } from '../sharing/Lane'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
 import { completeBlockTask, moveBlock, setEventRange } from './scoped'
 import { rangeOf, resizeEdge, shiftDays, storeRange } from './rangeEdit'
@@ -531,6 +532,10 @@ function DesktopCalendar() {
   const gridTo = rangeInfo ? Math.ceil((rangeInfo.end.getTime() + 14 * DAY_MS) / WEEK_MS) * WEEK_MS : null
   const gridRange = useMemo(() => (gridFrom != null && gridTo != null ? { start: new Date(gridFrom), end: new Date(gridTo) } : undefined), [gridFrom, gridTo])
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
+  // Sharing: the thin Heather lane of the people whose day is on — their blocks over the days on screen, as the server masks them.
+  const laneRange = useMemo(() => (rangeInfo ? { start: new Date(rangeInfo.start.getTime() - DAY_MS), end: new Date(rangeInfo.end.getTime() + DAY_MS) } : undefined), [rangeInfo])
+  const lanes = useLanes(laneRange, 'desktop')
+  const herLane = useMemo(() => lanes.filter((l) => !l.all_day).map((l) => ({ id: l.id, start: l.starts_at, end: l.ends_at, busy: l.title == null, lane: l.lane, label: laneSays(l, appZone()) })), [lanes])
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
   const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
   useEffect(() => onPrefApplied(VIEW_OPTIONS_KEY, () => setViewOpts(readViewOptions())), []) // changed on another device
@@ -1456,6 +1461,7 @@ function DesktopCalendar() {
               </div>
             </div>
             <div className="cal-head-ctrls">
+              {!planning && <LaneChips />}
               {/* Punch 32 [K-26]: the ⚟ view-options trigger replaces the segmented control +
                   N-day cycler — view switching now lives in the popover's 1–6/W/M row. */}
               {/* Bound Journal D11 = B: the header's controls are the kit's secondary button (bone, no outline, 12px). */}
@@ -1515,6 +1521,7 @@ function DesktopCalendar() {
               secondZone={planning ? null : secondZone}
               strip={planning}
               freeGaps={gaps}
+              herLane={planning ? undefined : herLane}
               conflictedIds={conflictedIds}
               pendingIds={pendingIds}
               failedIds={failedIds}
