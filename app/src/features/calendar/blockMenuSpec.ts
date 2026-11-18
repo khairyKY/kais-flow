@@ -251,7 +251,7 @@ function privateRow(e: CalendarEvent, ctx: BlockMenuContext): BlockMenuEntry {
   return { key: 'private', label: 'Private', hint: 'Shows as Busy to people you share with', on: e.task_id ? !!ctx.task?.private : !!e.private }
 }
 
-/** "▶ Focus on this" (focus D3): a task block's task, a Time block's first open task, else a plain round. */
+/** "Focus on this" (focus D3; the row's own icon is the only mark): a task block's task, a Time block's first open task, else a plain round. */
 export function focusTaskOf<T extends Pick<Task, 'id' | 'status'> & { slot_id?: string | null }>(e: Pick<CalendarEvent, 'id' | 'task_id' | 'seriesId'>, tasks: readonly T[]): T | null {
   if (e.task_id) return tasks.find((t) => t.id === e.task_id) ?? null
   const slot = e.seriesId ?? e.id
@@ -287,8 +287,8 @@ function menuB(e: CalendarEvent, ctx: BlockMenuContext, extras: BlockMenuEntry[]
     if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' })
   } else out.push(details)
   if (isShared(e)) out.push(...sharedHead(e, ctx).filter((r) => r.key === 'accept'))
-  // Focus D3: "▶ Focus on this" — a Time block or an open task's block lands on Focus, split into rounds.
-  if (!e.all_day && (e.type === 'time_block' || (e.task_id && ctx.task && ctx.task.status !== 'done'))) out.push({ key: 'focus', label: '▶ Focus on this' })
+  // Focus D3: "Focus on this" — a Time block or an open task's block lands on Focus, split into rounds.
+  if (!e.all_day && (e.type === 'time_block' || (e.task_id && ctx.task && ctx.task.status !== 'done'))) out.push({ key: 'focus', label: 'Focus on this' })
   // Kai 2026-10-17: a copy at the same time (side by side) — an event, or a task's copy blocked at this time;
   // never a Time block (a slot repeats instead). A repeat asks what to copy (cal-clicks; "This" by default).
   if (e.task_id ? !!ctx.task : e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D', divider: true })

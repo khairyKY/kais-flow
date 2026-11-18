@@ -157,7 +157,7 @@ const menuTexts = (page) => page.$$eval('[role="menu"] [role="menuitem"], [aria-
   await sleep(700)
   await shot(page, 'desktop-reset-menu')
   const reset = page.locator('.kf-sw-reset')
-  check('right-click menu: "Custom · Reset to Pricing site colour"', (await reset.count()) === 1 && /Custom\s*·\s*Reset to Pricing site colour/.test(await reset.innerText()), await reset.innerText().catch(() => 'none'))
+  check('right-click menu: "↺ Use Pricing site colour"', (await reset.count()) === 1 && /Use Pricing site colour/.test(await reset.innerText()), await reset.innerText().catch(() => 'none'))
   const b2 = state.writes.length
   await reset.locator('button').click()
   await sleep(900)

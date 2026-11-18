@@ -19,9 +19,9 @@ export function useBlockColor(): (item: Colored) => Resolved {
   return useMemo(() => makeColorResolver(projects, areas, tasks), [projects, areas, tasks])
 }
 
-/** The colour picker's reset line for a hand-coloured item: "Reset to Pricing colour" (what it would follow), else the default. */
+/** The colour picker's reset pill for a hand-coloured item: "Use Pricing colour" (what it would follow), else the default. */
 export function resetLabel(inherited: Resolved, projects: readonly { id: string; name: string }[], areas: readonly { id: string; name: string }[]): string {
   const list = inherited.source === 'project' ? projects : inherited.source === 'area' ? areas : []
   const name = list.find((x) => x.id === inherited.from)?.name
-  return name ? `Reset to ${name} colour` : 'Reset to default colour'
+  return name ? `Use ${name} colour` : 'Use default colour'
 }

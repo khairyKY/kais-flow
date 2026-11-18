@@ -77,12 +77,14 @@ const TRAY_CSS = `
 .kf-sw-custom > i { width: 10px; height: 10px; border-radius: 50%; }
 .kf-sw-custom > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 .kf-sw:focus-visible, .kf-sw-custom:focus-within { outline: none; box-shadow: var(--focus-ring); }
-.kf-sw-reset { grid-column: 1 / -1; font-family: var(--font-ui); font-size: var(--fs-caption); color: var(--ink-muted); }
-.kf-sw-reset button { padding: 0; border: 0; background: none; font: inherit; color: var(--acc-terra); text-decoration: underline; cursor: pointer; }
+.kf-sw-reset { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 2px; font-family: var(--font-ui); font-size: var(--fs-caption); color: var(--ink-muted); }
+.kf-sw-reset button { min-width: 0; max-width: 100%; padding: 4px 12px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: var(--paper-bone); font: inherit; color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.kf-sw-reset button:hover { border-color: var(--ink-faint); }
+.kf-sw-reset button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 `
 
 /** `columns`: 8 as drawn (a clear row over a deep row); the phone's sheet takes 10, two rows, so its rows stay in view. */
-export function SwatchTray({ value, onChange, size = 20, columns = 8, reset }: { value: string | null; onChange: (v: string | null) => void; size?: number; columns?: number; /** "Reset to Pricing colour": shown under the swatches while the colour is the item's own ("Custom"); one tap clears it (null), so it follows its project or area again. */ reset?: string }) {
+export function SwatchTray({ value, onChange, size = 20, columns = 8, reset }: { value: string | null; onChange: (v: string | null) => void; size?: number; columns?: number; /** "Use Pricing colour": shown under the swatches while the colour is the item's own; one tap clears it (null), so it follows its project or area again. */ reset?: string }) {
   const cur = swatchValue(value)
   const custom = !!cur && !BLOCK_SWATCHES.some((s) => s.value === cur)
   const input = useRef<HTMLInputElement>(null)
@@ -119,7 +121,7 @@ export function SwatchTray({ value, onChange, size = 20, columns = 8, reset }: {
       </label>
       {reset && value && (
         <div className="kf-sw-reset">
-          <span>Custom</span> · <button type="button" onClick={() => onChange(null)}>{reset}</button>
+          <button type="button" title={reset} onClick={() => onChange(null)}>↺ {reset}</button>
         </div>
       )}
     </div>

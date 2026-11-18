@@ -343,7 +343,7 @@ if (want('e')) {
   await writing.click({ button: 'right' })
   await sleep(500)
   const item = cal.page.getByRole('menuitem', { name: /Focus on this/ })
-  check('e the block menu offers ▶ Focus on this', (await item.count()) >= 1)
+  check('e the block menu offers Focus on this', (await item.count()) >= 1)
   await item.first().click().catch(() => {})
   await sleep(1200)
   const fs1 = await cal.page.evaluate(() => JSON.parse(localStorage.getItem('kf_focus_session') ?? 'null'))
