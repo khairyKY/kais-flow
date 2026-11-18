@@ -136,7 +136,9 @@ export function useSharedListsRealtime() {
       setIds(rows.filter((p) => p.shared_circle_id && p.user_id && p.user_id !== uid).map((p) => p.id).sort().slice(0, 100).join(','))
     }
     read()
-    return queryClient.getQueryCache().subscribe((e) => { if (e.query.queryKey[0] === 'projects') read() })
+    // Only when the data changes ('updated'): observers are added during a render (SmartListNav's useProjects), and a
+    // setState here then would update AppLayout mid-render (React's "Cannot update a component while rendering").
+    return queryClient.getQueryCache().subscribe((e) => { if (e.type === 'updated' && e.query.queryKey[0] === 'projects') read() })
   }, [uid])
   useEffect(() => {
     if (!uid || !ids) return
